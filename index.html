@@ -32,7 +32,7 @@ main{max-width:720px;margin:auto;padding:16px 14px 100px}.view{display:none}.vie
 <div class="section-title">Diese Woche sparen</div><div class="card"><div class="offer"><div><h3>Aktuelle Angebote prüfen</h3><span class="badge">🌱 Vegan möglich</span></div><button class="btn soft" onclick="go('offers');renderOffers()">Angebote →</button></div></div>
 </section>
 
-<section id="week" class="view"><div class="section-title">📅 Wochenplan</div><div class="card" id="weekList"></div></section>
+<section id="week" class="view"><div class="section-title">📅 Wochenplan</div><div class="card" id="weekList"></div><div style="margin-top:10px"><button class="btn primary" onclick="go('shopping');renderShopping()">🧺 Einkaufsliste erstellen</button></div></section>
 <section id="offers" class="view"><div class="section-title">🛒 Angebote & Sparen</div><div class="card"><p class="muted">Die App ist für eine spätere Live-Anbindung an freigegebene Händlerdaten vorbereitet.</p><button class="btn primary" onclick="openOfficial()">Offizielle Angebote öffnen ↗</button></div><div class="section-title">Passend für deinen Plan</div><div id="offerList"></div></section>
 <section id="shopping" class="view"><div class="section-title">🧺 Einkaufsliste</div><div class="card" id="shoppingList"></div></section>
 </main>
@@ -43,6 +43,21 @@ main{max-width:720px;margin:auto;padding:16px 14px 100px}.view{display:none}.vie
 const meals=[
 ["Vegane Linsen-Bolognese",true],["Kichererbsen-Spinat-Curry",true],["Tofu-Teriyaki-Bowl",true],["Vegane Chili-Bowl",true],["Vegane Wraps",true],["Vegane Kartoffelsuppe",true],
 ["Spaghetti Bolognese",false],["Curry mit Hähnchen",false],["Pfannkuchen",false],["Ofengemüse mit Feta",false],["Pesto-Pasta",false]];
+
+const ingredients={
+"Vegane Linsen-Bolognese":[["Rote Linsen",250,"g"],["Pasta",400,"g"],["Passierte Tomaten",500,"ml"]],
+"Kichererbsen-Spinat-Curry":[["Kichererbsen",2,"Dosen"],["Spinat",300,"g"],["Kokosmilch",1,"Dose"],["Reis",300,"g"]],
+"Tofu-Teriyaki-Bowl":[["Naturtofu",400,"g"],["Reis",300,"g"],["Brokkoli",300,"g"]],
+"Vegane Chili-Bowl":[["Kidneybohnen",2,"Dosen"],["Mais",1,"Dose"],["Avocado",2,"Stück"],["Passierte Tomaten",500,"ml"]],
+"Vegane Wraps":[["Tortilla-Wraps",8,"Stück"],["Hummus",200,"g"],["Salat",1,"Stück"]],
+"Vegane Kartoffelsuppe":[["Kartoffeln",1000,"g"],["Karotten",300,"g"],["Gemüsebrühe",1,"L"]],
+"Spaghetti Bolognese":[["Hackfleisch",500,"g"],["Spaghetti",500,"g"],["Tomaten",2,"Dosen"]],
+"Curry mit Hähnchen":[["Hähnchenbrust",500,"g"],["Reis",300,"g"],["Paprika",2,"Stück"],["Kokosmilch",1,"Dose"]],
+"Pfannkuchen":[["Mehl",250,"g"],["Milch",500,"ml"],["Eier",3,"Stück"]],
+"Ofengemüse mit Feta":[["Kartoffeln",800,"g"],["Paprika",2,"Stück"],["Feta",200,"g"]],
+"Pesto-Pasta":[["Pasta",400,"g"],["Pesto",1,"Glas"],["Tomaten",250,"g"]]
+};
+
 const days=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
 const offers=[
 ["ALDI SÜD","Äpfel Krumme Dinger","1,99 €","2 kg",true],["ALDI SÜD","Plattpfirsiche","1,11 €","500 g",true],
@@ -50,12 +65,26 @@ const offers=[
 let week=JSON.parse(localStorage.getItem("fep_premium_week")||"[]");
 function save(){localStorage.setItem("fep_premium_week",JSON.stringify(week));update()}
 function update(){document.getElementById("familyOut").textContent=(+family.value||1)+" Personen";document.getElementById("budgetOut").textContent=(+budget.value||0).toLocaleString("de-DE")+" €";let p=week.filter(Boolean).length;document.getElementById("plannedOut").textContent=p+" / 7";document.getElementById("veganOut").textContent=week.filter(x=>meals.find(m=>m[0]===x)?.[1]).length+" Tage"}
-function renderWeek(){document.getElementById("weekList").innerHTML=days.map((d,i)=>`<div class="meal"><div class="day">${d}</div><select data-i="${i}"><option value="">Gericht wählen…</option>${meals.map(m=>`<option ${week[i]===m[0]?"selected":""}>${m[0]}${m[1]?" 🌱":""}</option>`).join("")}</select></div>`).join("");document.querySelectorAll("#weekList select").forEach(s=>s.onchange=e=>{week[+e.target.dataset.i]=e.target.value;save()})}
+function renderWeek(){document.getElementById("weekList").innerHTML=days.map((d,i)=>`<div class="meal"><div class="day">${d}</div><select data-i="${i}"><option value="">Gericht wählen…</option>${meals.map(m=>`<option ${week[i]===m[0]?"selected":""}>${m[0]}${m[1]?" 🌱":""}</option>`).join("")}</select></div>`).join("");document.querySelectorAll("#weekList select").forEach(s=>s.onchange=e=>{week[+e.target.dataset.i]=e.target.value;save();renderShopping()})}
 function renderOffers(){let d=document.getElementById("diet").value;let os=offers.filter(o=>d==="Vegan"?o[4]:true);document.getElementById("offerList").innerHTML=os.map(o=>`<div class="card offer" style="margin-bottom:10px"><div class="offer"><div><h3>${o[1]}</h3><span class="muted">${o[0]} · ${o[3]} ${o[4]?"· 🌱 vegan":""}</span></div><div class="price">${o[2]}</div></div></div>`).join("")}
-function renderShopping(){let chosen=week.filter(Boolean);document.getElementById("shoppingList").innerHTML=chosen.length?chosen.map((x,i)=>`<div class="check"><input type="checkbox"><div><b>${x}</b><div class="muted">Zutaten aus dem Rezept</div></div></div>`).join(""):'<div class="empty">Deine Einkaufsliste wird hier aus dem Wochenplan aufgebaut.</div>'}
+function renderShopping(){
+ let totals={};
+ week.filter(Boolean).forEach(name=>{
+   (ingredients[name]||[]).forEach(([item,qty,unit])=>{
+     const key=item+"|"+unit;
+     totals[key]=(totals[key]||0)+qty*(+family.value||4)/4;
+   });
+ });
+ const rows=Object.entries(totals);
+ document.getElementById("shoppingList").innerHTML=rows.length?
+   `<div class="card"><div class="muted" style="margin-bottom:10px">Automatisch aus deinem Wochenplan berechnet · für ${+family.value||4} Personen</div>`+
+   rows.map(([key,qty],i)=>{let [item,unit]=key.split("|");return `<div class="check"><input type="checkbox" id="shop${i}"><label for="shop${i}" style="margin:0;flex:1"><b>${item}</b><div class="muted">${Math.round(qty*10)/10} ${unit}</div></label></div>`}).join("")+
+   `</div><div class="card" style="margin-top:10px"><b>${rows.length} verschiedene Einkaufsartikel</b><div class="muted">Vorräte können in der nächsten Version direkt abgezogen werden.</div></div>`
+   :'<div class="empty">Wähle zuerst Gerichte im Wochenplan. Danach wird hier automatisch deine Einkaufsliste erstellt.</div>';
+}
 function go(id){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));if(id==="week")renderWeek();if(id==="offers")renderOffers();if(id==="shopping")renderShopping()}
 document.querySelectorAll(".bottom button").forEach(b=>b.onclick=()=>go(b.dataset.go));
-family.oninput=update;budget.oninput=update;diet.onchange=renderOffers;
+family.oninput=()=>{update();renderShopping()};budget.oninput=update;diet.onchange=renderOffers;
 function openOfficial(){const s=document.getElementById("store").value;const urls={"REWE":"https://www.rewe.de/angebote/nationale-angebote/","Lidl":"https://www.lidl.de/c/online-prospekte/s10005610","ALDI SÜD":"https://www.aldi-sued.de/angebote","Kaufland":"https://filiale.kaufland.de/prospekte.html"};window.open(urls[s],"_blank")}
 update();renderWeek();
 </script></body></html>
