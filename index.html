@@ -141,7 +141,7 @@ function renderWeekAnalysis(){weekAnalysis.innerHTML=smartAnalysis.innerHTML}
 
 function renderWeek(){document.getElementById("weekList").innerHTML=days.map((d,i)=>`<div class="meal"><div class="day">${d}</div><select data-i="${i}"><option value="">Gericht wählen…</option>${R.filter(compatible).map(r=>`<option value="${r.id}" ${state.week[i]===r.id?"selected":""}>${r.name}${r.vegan?" 🌱":""}</option>`).join("")}</select></div>`).join("");document.querySelectorAll("#weekList select").forEach(s=>s.onchange=e=>{state.week[+e.target.dataset.i]=e.target.value;save();renderShopping();renderSmartAnalysis()});renderSmartAnalysis()}
 function recipeEmoji(r){return r.vegan?"🌱":"🍲"}
-function recipeImage(r){return r.id+".svg"}
+function recipeImage(r){return "images/"+r.id+".jpg"}
 function renderRecipes(){
   const f=(recipeFilter.value||"Alle");
   const q=(recipeSearch.value||"").toLowerCase().trim();
