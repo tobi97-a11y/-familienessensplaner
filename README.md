@@ -49,3 +49,12 @@ Die Live-Angebotsautomatisierung ist als Produktfunktion vorgesehen, aber die en
 - Wiederherstellung des vorherigen Wochenplans
 - Angebot → passendes Rezept
 - Budgetwarnung
+
+
+## V8 Rezept-Fix
+- Rezeptbibliothek zeigt wieder alle 12 Gerichte direkt
+- Suchfeld und Filter funktionieren unabhängig von Profilfiltern
+- „Alle Rezepte anzeigen“-Reset
+- Rezeptanzahl sichtbar
+- Rezeptbilder direkt aus dem GitHub-Hauptverzeichnis
+- größere Rezeptkarten und „Rezept öffnen“-Button
