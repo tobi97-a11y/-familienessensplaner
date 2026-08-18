@@ -1,0 +1,9 @@
+{
+  "name": "FamilienEssensPlaner",
+  "short_name": "EssensPlaner",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F7F8F5",
+  "theme_color": "#24352A",
+  "lang": "de"
+}

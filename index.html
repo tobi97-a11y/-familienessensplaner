@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#24352A">
+<link rel="manifest" href="manifest.webmanifest">
+<title>FamilienEssensPlaner</title>
+<style>
+:root{--ink:#24352A;--sage:#6C8A70;--mint:#EAF2EA;--paper:#F7F8F5;--card:#fff;--line:#D9DED8;--muted:#69736C;--gold:#D7A84A}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:#29322D;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--ink);color:#fff;padding:20px 18px 18px;position:sticky;top:0;z-index:10}header .top{display:flex;justify-content:space-between;align-items:center;max-width:720px;margin:auto}header h1{font-size:22px;margin:0}header p{margin:4px 0 0;font-size:12px;opacity:.75}
+main{max-width:720px;margin:auto;padding:16px 14px 100px}.view{display:none}.view.active{display:block}
+.hero{background:linear-gradient(135deg,#EAF2EA,#fff);border:1px solid var(--line);border-radius:24px;padding:22px;margin-bottom:14px}.hero h2{margin:0;color:var(--ink);font-size:28px}.hero p{color:var(--muted);line-height:1.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:0 5px 18px #24352a08}.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.big{font-size:23px;font-weight:800;color:var(--ink);margin-top:5px}
+.section-title{font-size:19px;font-weight:800;color:var(--ink);margin:22px 3px 10px}
+.btn{border:0;border-radius:13px;padding:12px 15px;font-weight:750;cursor:pointer}.primary{background:var(--ink);color:white}.soft{background:var(--mint);color:var(--ink);border:1px solid var(--line)}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}.control label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}.control input,.control select{width:100%;padding:11px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.meal{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}.meal:last-child{border-bottom:0}.day{width:80px;font-weight:750;color:var(--ink)}.meal select{flex:1;padding:10px;border:1px solid var(--line);border-radius:10px}
+.offer{display:flex;justify-content:space-between;gap:12px;align-items:center}.offer h3{margin:0 0 5px;color:var(--ink);font-size:15px}.price{font-size:20px;font-weight:850;color:var(--ink)}.badge{display:inline-block;background:var(--mint);color:#416046;border-radius:99px;padding:3px 7px;font-size:10px;font-weight:750}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;z-index:20}.bottom-inner{width:min(720px,100%);display:grid;grid-template-columns:repeat(4,1fr)}.bottom button{border:0;background:#fff;padding:10px 3px;color:var(--muted);font-size:11px}.bottom button.active{color:var(--ink);font-weight:800}.ico{display:block;font-size:19px;margin-bottom:2px}
+.check{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.check input{width:19px;height:19px}.empty{padding:25px;text-align:center;color:var(--muted)}
+@media(max-width:480px){.grid,.controls{grid-template-columns:1fr 1fr}.hero h2{font-size:25px}.day{width:68px;font-size:13px}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><h1>FamilienEssensPlaner</h1><p>Planen · Sparen · Entspannt essen</p></div><div>🌱</div></div></header>
+<main>
+<section id="home" class="view active">
+<div class="hero"><h2>Deine Woche, einfach geplant.</h2><p>Finde passende Familiengerichte, nutze Angebote und behalte dein Budget im Blick.</p><button class="btn primary" onclick="go('week')">Wochenplan öffnen →</button></div>
+<div class="grid"><div class="card"><div class="label">Familie</div><div class="big" id="familyOut">4 Personen</div></div><div class="card"><div class="label">Budget</div><div class="big" id="budgetOut">150 €</div></div><div class="card"><div class="label">Geplant</div><div class="big" id="plannedOut">0 / 7</div></div><div class="card"><div class="label">Vegan</div><div class="big" id="veganOut">0 Tage</div></div></div>
+<div class="section-title">Schnell einstellen</div><div class="card controls"><div class="control"><label>Familiengröße</label><input id="family" type="number" min="1" value="4"></div><div class="control"><label>Wochenbudget</label><input id="budget" type="number" min="0" value="150"></div><div class="control"><label>Supermarkt</label><select id="store"><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option></select></div><div class="control"><label>Ernährung</label><select id="diet"><option>Alle</option><option>Vegan</option><option>Vegetarisch</option></select></div></div>
+<div class="section-title">Diese Woche sparen</div><div class="card"><div class="offer"><div><h3>Aktuelle Angebote prüfen</h3><span class="badge">🌱 Vegan möglich</span></div><button class="btn soft" onclick="go('offers');renderOffers()">Angebote →</button></div></div>
+</section>
+
+<section id="week" class="view"><div class="section-title">📅 Wochenplan</div><div class="card" id="weekList"></div></section>
+<section id="offers" class="view"><div class="section-title">🛒 Angebote & Sparen</div><div class="card"><p class="muted">Die App ist für eine spätere Live-Anbindung an freigegebene Händlerdaten vorbereitet.</p><button class="btn primary" onclick="openOfficial()">Offizielle Angebote öffnen ↗</button></div><div class="section-title">Passend für deinen Plan</div><div id="offerList"></div></section>
+<section id="shopping" class="view"><div class="section-title">🧺 Einkaufsliste</div><div class="card" id="shoppingList"></div></section>
+</main>
+<nav class="bottom"><div class="bottom-inner">
+<button data-go="home" class="active"><span class="ico">🏠</span>Start</button><button data-go="week"><span class="ico">📅</span>Woche</button><button data-go="offers"><span class="ico">🛒</span>Angebote</button><button data-go="shopping"><span class="ico">🧺</span>Einkauf</button>
+</div></nav>
+<script>
+const meals=[
+["Vegane Linsen-Bolognese",true],["Kichererbsen-Spinat-Curry",true],["Tofu-Teriyaki-Bowl",true],["Vegane Chili-Bowl",true],["Vegane Wraps",true],["Vegane Kartoffelsuppe",true],
+["Spaghetti Bolognese",false],["Curry mit Hähnchen",false],["Pfannkuchen",false],["Ofengemüse mit Feta",false],["Pesto-Pasta",false]];
+const days=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+const offers=[
+["ALDI SÜD","Äpfel Krumme Dinger","1,99 €","2 kg",true],["ALDI SÜD","Plattpfirsiche","1,11 €","500 g",true],
+["Kaufland","Cocktailrispentomaten","0,99 €","500 g",true],["REWE","Pasta","1,49 €","500 g",true]];
+let week=JSON.parse(localStorage.getItem("fep_premium_week")||"[]");
+function save(){localStorage.setItem("fep_premium_week",JSON.stringify(week));update()}
+function update(){document.getElementById("familyOut").textContent=(+family.value||1)+" Personen";document.getElementById("budgetOut").textContent=(+budget.value||0).toLocaleString("de-DE")+" €";let p=week.filter(Boolean).length;document.getElementById("plannedOut").textContent=p+" / 7";document.getElementById("veganOut").textContent=week.filter(x=>meals.find(m=>m[0]===x)?.[1]).length+" Tage"}
+function renderWeek(){document.getElementById("weekList").innerHTML=days.map((d,i)=>`<div class="meal"><div class="day">${d}</div><select data-i="${i}"><option value="">Gericht wählen…</option>${meals.map(m=>`<option ${week[i]===m[0]?"selected":""}>${m[0]}${m[1]?" 🌱":""}</option>`).join("")}</select></div>`).join("");document.querySelectorAll("#weekList select").forEach(s=>s.onchange=e=>{week[+e.target.dataset.i]=e.target.value;save()})}
+function renderOffers(){let d=document.getElementById("diet").value;let os=offers.filter(o=>d==="Vegan"?o[4]:true);document.getElementById("offerList").innerHTML=os.map(o=>`<div class="card offer" style="margin-bottom:10px"><div class="offer"><div><h3>${o[1]}</h3><span class="muted">${o[0]} · ${o[3]} ${o[4]?"· 🌱 vegan":""}</span></div><div class="price">${o[2]}</div></div></div>`).join("")}
+function renderShopping(){let chosen=week.filter(Boolean);document.getElementById("shoppingList").innerHTML=chosen.length?chosen.map((x,i)=>`<div class="check"><input type="checkbox"><div><b>${x}</b><div class="muted">Zutaten aus dem Rezept</div></div></div>`).join(""):'<div class="empty">Deine Einkaufsliste wird hier aus dem Wochenplan aufgebaut.</div>'}
+function go(id){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));if(id==="week")renderWeek();if(id==="offers")renderOffers();if(id==="shopping")renderShopping()}
+document.querySelectorAll(".bottom button").forEach(b=>b.onclick=()=>go(b.dataset.go));
+family.oninput=update;budget.oninput=update;diet.onchange=renderOffers;
+function openOfficial(){const s=document.getElementById("store").value;const urls={"REWE":"https://www.rewe.de/angebote/nationale-angebote/","Lidl":"https://www.lidl.de/c/online-prospekte/s10005610","ALDI SÜD":"https://www.aldi-sued.de/angebote","Kaufland":"https://filiale.kaufland.de/prospekte.html"};window.open(urls[s],"_blank")}
+update();renderWeek();
+</script></body></html>
