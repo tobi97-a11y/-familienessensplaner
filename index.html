@@ -23,6 +23,16 @@ label{display:block;font-size:14px;font-weight:800;margin:10px 0 5px;color:var(-
 nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);z-index:30;padding:6px 3px calc(6px + env(safe-area-inset-bottom))}nav button{background:none;color:#68736c;padding:6px 2px;font-size:12px}nav button.active{color:var(--g);font-weight:900}nav span{display:block;font-size:22px}
 .modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:50}.modal.open{display:flex}.sheet{background:#fff;width:100%;max-height:88vh;overflow:auto;border-radius:25px 25px 0 0;padding:20px}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.recipe-grid{grid-template-columns:repeat(2,1fr)}.quick{grid-template-columns:repeat(2,1fr)}}@media(max-width:480px){.grid,.recipe-grid{grid-template-columns:1fr}.day{grid-template-columns:78px 1fr}.day img{width:78px;height:62px}.day button{grid-column:2}.quick{grid-template-columns:repeat(2,1fr)}}
+
+.autocomplete-wrap{position:relative}
+.suggestions{position:absolute;z-index:50;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #d5ddd5;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);overflow:hidden}
+.suggestion{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;border:0;background:#fff;text-align:left;padding:13px 15px;cursor:pointer;font:inherit}
+.suggestion:hover,.suggestion:focus{background:#f1f7ef}
+.suggestion small{color:#6f786f}
+.search-help{margin:10px 0 16px;padding:12px 14px;background:#f4f8f1;border-radius:14px;color:#667066;display:flex;flex-direction:column;gap:7px}
+.quick-products{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid #d7e2d4;background:#fff;border-radius:999px;padding:7px 10px;cursor:pointer}
+.price-preview{margin-top:10px;padding:11px 13px;border-radius:12px;background:#eef7eb}
 </style></head>
 <body>
 <header><h1>FamilienEssensPlaner</h1><p>Planen · Kochen · Sparen · Einkaufen 🌱</p></header>
@@ -212,7 +222,49 @@ function ingredientCompareRows(items){
    return {...i,matchedProduct:key,best,offers,packages:packs,estimated};
  });
 }
-async function compareList(){
+async 
+function normalizeProductText(v){return (v||"").toLocaleLowerCase("de-DE").trim();}
+function productCatalogNames(){
+  if(typeof INGREDIENT_CATALOG==="undefined") return [];
+  return Object.keys(INGREDIENT_CATALOG);
+}
+function productMatches(q){
+  const n=normalizeProductText(q);
+  const names=productCatalogNames();
+  if(!n) return names.slice(0,10);
+  return names.filter(name=>{
+    const c=INGREDIENT_CATALOG[name]||{};
+    return normalizeProductText(name).includes(n) || (c.aliases||[]).some(a=>normalizeProductText(a).includes(n));
+  }).slice(0,10);
+}
+function chooseProduct(name){
+  const input=document.getElementById("offerProduct");
+  if(input){input.value=name; updateProductSuggestions(false); showProductPricePreview(name);}
+}
+function updateProductSuggestions(showEmpty=false){
+  const input=document.getElementById("offerProduct"), box=document.getElementById("productSuggestions");
+  if(!input||!box)return;
+  const q=input.value||"", matches=productMatches(q);
+  if(!q && !showEmpty){box.style.display="none";return;}
+  box.innerHTML=matches.length?matches.map(name=>{
+    const c=INGREDIENT_CATALOG[name]||{};
+    return '<button type="button" class="suggestion" onclick="chooseProduct('+JSON.stringify(name)+')"><span>🛒 <b>'+esc(name)+'</b></span><small>'+(c.pack?('Packung '+formatQty(c.pack)+' '+esc(c.unit||'')):'Rezeptzutat')+'</small></button>';
+  }).join(""):'<div class="suggestion"><span>Keine passende Rezeptzutat gefunden</span></div>';
+  box.style.display="block";
+}
+function showProductPricePreview(name){
+  const c=INGREDIENT_CATALOG[name], help=document.getElementById("productSearchHelp");
+  if(!c||!help)return;
+  let preview=help.querySelector(".price-preview");
+  if(!preview){preview=document.createElement("div");preview.className="price-preview";help.appendChild(preview);}
+  preview.innerHTML='💶 <b>Planpreis vor dem Vergleich:</b> '+Number(c.price||0).toFixed(2).replace(".",",")+' € · Packung '+formatQty(c.pack||1)+' '+esc(c.unit||"");
+}
+document.addEventListener("click",function(e){
+  const wrap=document.querySelector(".autocomplete-wrap");
+  const box=document.getElementById("productSuggestions");
+  if(wrap&&box&&!wrap.contains(e.target))box.style.display="none";
+});
+function compareList(){
  const s=getState(), items=allRecipeIngredients();
  if(!items.length){alert("Bitte zuerst mindestens einen Tag im Wochenplan mit einem Rezept belegen.");show("week");return}
  show("offers");
