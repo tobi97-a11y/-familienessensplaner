@@ -33,7 +33,7 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
 <div class="card"><div class="label">Ersparnis</div><div class="big" id="saveOut">0,00 €</div></div>
 </div>
 <div class="card" style="margin-top:10px"><b id="budgetWarning">Plan prüfen</b><div class="muted">Kosten werden aus den Rezept-Schätzungen berechnet. Angebote und echte Händlerpreise können später angebunden werden.</div></div>
-<div class="section-title">⚙️ Mein Familienprofil</div>
+<div class="section-title">⚙️ Mein Familienprofil & Einkauf</div>
 <div class="card controls">
 <div class="control"><label>Familiengröße</label><input id="family" type="number" min="1" value="4"></div>
 <div class="control"><label>Wochenbudget (€)</label><input id="budget" type="number" min="0" value="150"></div>
@@ -42,6 +42,31 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
 <div class="control"><label>Max. Kochzeit</label><select id="maxTime"><option value="999">egal</option><option value="20">20 Min.</option><option value="30">30 Min.</option><option value="40">40 Min.</option></select></div>
 <div class="control"><label>Priorität</label><select id="priority"><option value="cheap">Günstig</option><option value="fast">Schnell</option><option value="prep">Meal Prep</option><option value="kid">Kinderfreundlich</option></select></div>
 </div>
+
+<div class="section-title">🛒 Mein Lieblingsmarkt</div>
+<div class="card">
+  <div class="controls">
+    <div class="control">
+      <label>Supermarkt</label>
+      <select id="favoriteMarket" onchange="saveMarket()">
+        <option value="Denns BioMarkt">🌱 Denns BioMarkt</option>
+        <option value="REWE">🛒 REWE</option>
+        <option value="Lidl">🛒 Lidl</option>
+        <option value="ALDI">🛒 ALDI</option>
+        <option value="Kaufland">🛒 Kaufland</option>
+      </select>
+    </div>
+    <div class="control">
+      <label>PLZ oder Ort</label>
+      <input id="marketLocation" placeholder="z. B. 30159 Hannover" onchange="saveMarket()">
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px;align-items:center">
+    <div id="marketSaved" class="muted" style="flex:1">Noch kein Lieblingsmarkt gespeichert.</div>
+    <button class="btn primary" onclick="openFavoriteMarket()">Markt & Angebote öffnen</button>
+  </div>
+</div>
+
 <div class="section-title">🚫 Unverträglichkeiten & Ausschlüsse</div>
 <div class="card controls">
 <div class="control"><label>Allergien / vermeiden</label><input id="avoid" placeholder="z. B. Nüsse, Paprika"></div>
@@ -103,7 +128,7 @@ const DATA={"recipes": [{"id": "lentil", "name": "Vegane Linsen-Bolognese", "veg
 const R=DATA.recipes, O=DATA.offers;
 const days=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
 const urls={"REWE":"https://www.rewe.de/angebote/nationale-angebote/","Lidl":"https://www.lidl.de/c/online-prospekte/s10005610","ALDI SÜD":"https://www.aldi-sued.de/angebote","Kaufland":"https://filiale.kaufland.de/prospekte.html"};
-let state=JSON.parse(localStorage.getItem("fep_complete")||"null")||{family:4,budget:150,store:"REWE",diet:"Alle",maxTime:999,priority:"cheap",avoid:"",dislike:"",pantry:[],week:Array(7).fill(""),favorites:[],ratings:{},checks:{},lastWeek:[]};
+let state=JSON.parse(localStorage.getItem("fep_complete")||"null")||{family:4,budget:150,store:"REWE",diet:"Alle",maxTime:999,priority:"cheap",avoid:"",dislike:"",pantry:[],week:Array(7).fill(""),favorites:[],ratings:{},checks:{},lastWeek:[],favoriteMarket:"Denns BioMarkt",marketLocation:""};
 
 function save(){localStorage.setItem("fep_complete",JSON.stringify(state));updateDashboard()}
 function syncInputs(){family.value=state.family;budget.value=state.budget;store.value=state.store;diet.value=state.diet;maxTime.value=state.maxTime;priority.value=state.priority;avoid.value=state.avoid;dislike.value=state.dislike;renderPantry();updateDashboard()}
@@ -235,7 +260,7 @@ function renderPantry(){pantryTags.innerHTML=state.pantry.length?state.pantry.ma
 function removePantry(i){state.pantry.splice(i,1);save();renderPantry()}
 function renderShopping(){let totals={};state.week.map(id=>R.find(r=>r.id===id)).filter(Boolean).forEach(r=>r.ingredients.forEach(([item,q,u,cat])=>{let pantry=state.pantry.some(p=>p.toLowerCase()===item.toLowerCase());if(!pantry){let k=cat+"|"+item+"|"+u;totals[k]=(totals[k]||0)+q*(+state.family||4)/4}}));let entries=Object.entries(totals);let done=Object.values(state.checks).filter(Boolean).length;let total=entries.length;let pct=total?Math.round(done/total*100):0;shopProgress.style.width=pct+"%";shopProgressText.textContent=done+" von "+total+" erledigt";shoppingList.innerHTML=entries.length?entries.map(([k,q],i)=>{let [cat,item,u]=k.split("|");let key=cat+"|"+item;return `<div class="card" style="margin-top:10px"><div class="cat-title">${cat}</div><div class="check"><input type="checkbox" ${state.checks[key]?"checked":""} onchange="state.checks['${key.replace(/'/g,"\\'")}']=this.checked;save();renderShopping()"><div style="flex:1"><b>${item}</b><div class="muted">${Math.round(q*10)/10} ${u}</div></div></div></div>`}).join(""):'<div class="empty">Wähle Gerichte im Wochenplan. Die Einkaufsliste wird automatisch nach Warengruppen erstellt und Vorräte werden abgezogen.</div>'}
 function clearChecks(){state.checks={};save();renderShopping()}
-syncInputs();renderRecipes();renderWeek();renderShopping();renderSmartAnalysis();
+syncInputs();loadMarket();renderRecipes();renderWeek();renderShopping();renderSmartAnalysis();
 
 
 function openDenns(){
@@ -268,6 +293,37 @@ function findDealRecipes(){
       <button class="btn primary" onclick="showRecipe('${x.r.id}')">Öffnen</button>
     </div>`).join("")}</div>`:
     '<div class="card"><b>Keine direkte Übereinstimmung.</b><p class="muted">Probiere z. B. „Linsen, Tomaten, Zucchini“.</p></div>';
+}
+
+function saveMarket(){
+  const m=document.getElementById("favoriteMarket");
+  const loc=document.getElementById("marketLocation");
+  if(m) state.favoriteMarket=m.value;
+  if(loc) state.marketLocation=loc.value.trim();
+  save();
+  const out=document.getElementById("marketSaved");
+  if(out) out.textContent="Gespeichert: "+state.favoriteMarket+(state.marketLocation?" · "+state.marketLocation:"");
+}
+function loadMarket(){
+  const m=document.getElementById("favoriteMarket");
+  const loc=document.getElementById("marketLocation");
+  if(m) m.value=state.favoriteMarket||"Denns BioMarkt";
+  if(loc) loc.value=state.marketLocation||"";
+  const out=document.getElementById("marketSaved");
+  if(out) out.textContent=state.marketLocation?("Gespeichert: "+state.favoriteMarket+" · "+state.marketLocation):"Noch kein Lieblingsmarkt gespeichert.";
+}
+function openFavoriteMarket(){
+  const market=state.favoriteMarket||"Denns BioMarkt";
+  const loc=state.marketLocation||"";
+  if(market==="Denns BioMarkt"){
+    const url=loc
+      ? "https://www.biomarkt.de/?marktsuche=marktfinder&q="+encodeURIComponent(loc)
+      : "https://www.biomarkt.de/angebote";
+    window.open(url,"_blank","noopener");
+  }else{
+    const q=encodeURIComponent(market+" "+loc);
+    window.open("https://www.google.com/search?q="+q,"_blank","noopener");
+  }
 }
 </script>
 </body></html>
