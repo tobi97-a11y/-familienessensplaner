@@ -59,7 +59,7 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
     </div>
     <div class="control">
       <label>PLZ oder Ort</label>
-      <input id="marketLocation" placeholder="z. B. 30159 Hannover" onchange="saveMarket()">
+      <input id="marketLocation" placeholder="z. B. 30159 Hannover" onchange="saveMarket()"><div id="profileLocationHint" class="muted" style="font-size:.82rem;margin-top:5px">Diese PLZ wird im Angebotsvergleich verwendet.</div>
     </div>
   </div>
   <div class="row" style="margin-top:10px;align-items:center">
@@ -161,8 +161,8 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
       </div>
     </div>
     <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
-      <button type="button" id="startCompareBtn" class="btn primary">🏆 Vergleich starten</button>
-      <button type="button" id="profileCompareBtn" class="btn soft">Profil-PLZ verwenden</button>
+      <button type="button" id="startCompareBtn" class="btn primary" onclick="startSmartCompare()">🏆 Vergleich starten</button>
+      <button type="button" id="profileCompareBtn" class="btn soft" onclick="compareFromProfile()">Profil-PLZ verwenden</button>
     </div>
     <div id="compareStatus" class="muted" style="margin-top:10px"></div>
     <div id="compareResults" style="margin-top:12px"></div>
@@ -404,75 +404,106 @@ const compareMarkets=[
 
 function compareFromProfile(){
   try{
-    const loc=(state && state.marketLocation ? String(state.marketLocation) : "").trim();
-    const el=document.getElementById("compareLocation");
-    if(el) el.value=loc;
+    // Read the actual family-profile location field first.
+    const profileField=document.getElementById("marketLocation");
+    const profileLocation=profileField ? String(profileField.value||"").trim() : "";
+    const savedLocation=(typeof state!=="undefined" && state.marketLocation)
+      ? String(state.marketLocation).trim() : "";
+    const loc=profileLocation || savedLocation;
+
+    const compareField=document.getElementById("compareLocation");
+    const status=document.getElementById("compareStatus");
+
     if(!loc){
-      const status=document.getElementById("compareStatus");
-      if(status) status.textContent="Bitte zuerst im Familienprofil eine PLZ oder einen Ort speichern.";
-      return;
+      if(status) status.textContent="📍 Im Familienprofil ist noch keine PLZ/kein Ort gespeichert. Bitte oben im Profil eintragen.";
+      if(profileField) profileField.focus();
+      return false;
     }
-    startSmartCompare();
-  }catch(err){ showCompareError(err); }
+
+    if(compareField) compareField.value=loc;
+
+    // Keep the profile and comparison state synchronized.
+    if(typeof state!=="undefined"){
+      state.marketLocation=loc;
+      if(typeof save==="function") save();
+    }
+    try{
+      const old=JSON.parse(localStorage.getItem("fep_compare")||"{}");
+      localStorage.setItem("fep_compare",JSON.stringify({
+        location:loc,
+        product:old.product||""
+      }));
+    }catch(_){}
+
+    return startSmartCompare();
+  }catch(err){
+    console.error("Profil-PLZ:",err);
+    const status=document.getElementById("compareStatus");
+    if(status) status.textContent="⚠️ Die Profil-PLZ konnte nicht übernommen werden.";
+    return false;
+  }
 }
 
 function startSmartCompare(){
   try{
-    const loc=(document.getElementById("compareLocation")?.value||"").trim();
-    const product=(document.getElementById("compareProduct")?.value||"").trim();
+    const locEl=document.getElementById("compareLocation");
+    const productEl=document.getElementById("compareProduct");
+    const loc=(locEl ? String(locEl.value||"") : "").trim();
+    const product=(productEl ? String(productEl.value||"") : "").trim();
     const status=document.getElementById("compareStatus");
     const results=document.getElementById("compareResults");
 
     if(!loc){
-      if(status) status.textContent="📍 Bitte zuerst PLZ oder Ort eingeben.";
-      document.getElementById("compareLocation")?.focus();
-      return;
+      if(status) status.textContent="📍 Bitte zuerst deine PLZ oder deinen Ort eingeben.";
+      if(locEl) locEl.focus();
+      return false;
     }
 
+    if(typeof state!=="undefined"){
+      state.marketLocation=loc;
+      state.compareLocation=loc;
+      state.compareProduct=product;
+      if(typeof save==="function") save();
+    }
     try{
-      state.compareLocation=loc; state.compareProduct=product;
       localStorage.setItem("fep_compare",JSON.stringify({location:loc,product:product}));
     }catch(_){}
 
-    if(status) status.innerHTML="✅ Vergleich für <b>"+escapeHtml(loc)+"</b>"+(product?" · <b>"+escapeHtml(product)+"</b>":"")+" gestartet.";
-
-    const q=product ? encodeURIComponent(product) : "";
-    const rows=compareMarkets.map(function(m){
-      let label="Angebote prüfen";
-      let note="Offizielle Angebotsseite öffnen";
-      if(m.name==="REWE" && /^99817\b/i.test(loc)){
-        note="📍 REWE-Märkte in 99817 sind verfügbar";
-      }
-      if(m.name==="Denns BioMarkt") note="🌱 Bio-Angebote / Handzettel";
-      return '<div class="card market-result" style="margin:0">'+
-        '<div class="row" style="justify-content:space-between;align-items:center;gap:10px">'+
-          '<div><h3 style="margin:0">'+escapeHtml(m.name)+'</h3><div class="muted">'+note+'</div></div>'+
-          '<span class="badge" style="background:#eef7e8;color:#2d5d3a">Quelle</span>'+
-        '</div>'+
-        '<div class="muted" style="margin-top:8px">'+
-          (product ? 'Suche nach „'+escapeHtml(product)+'“ auf der offiziellen Angebotsseite.' : 'Aktuelle Angebote und Prospekte ansehen.')+
-        '</div>'+
-        '<button type="button" class="btn primary market-offer-btn" data-market="'+escapeHtml(m.name)+'" style="margin-top:10px">'+label+'</button>'+
-      '</div>';
-    }).join("");
+    if(status) status.textContent="✅ Vergleich für "+loc+" gestartet.";
 
     if(results){
-      results.innerHTML=
-        '<div class="card" style="background:#fff;border:2px solid #b8d99e">'+
-          '<h2 style="margin-top:0">🏆 Vergleichsergebnisse</h2>'+
-          '<p class="muted">Standort: <b>'+escapeHtml(loc)+'</b>'+(product?' · Produkt: <b>'+escapeHtml(product)+'</b>':'')+'</p>'+
-          '<div class="offer-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">'+rows+'</div>'+
-          '<div class="card" style="margin-top:12px;background:#f7faf4">'+
-            '<b>ℹ️ Warum sehe ich noch keinen „günstigsten Preis“?</b>'+
-            '<p class="muted" style="margin-bottom:0">Die Händler stellen ihre Live-Preise nicht einheitlich für eine externe App bereit. V22 zeigt deshalb zuerst verifizierbare Angebotsquellen. Ein Preis wird erst als Gewinner markiert, wenn Produkt, Packungsgröße, Zeitraum und Markt eindeutig verifiziert sind.</p>'+
+      results.innerHTML =
+        '<div class="card" style="background:#fff;border:2px solid #d7e8cc">' +
+          '<h3>🏆 Vergleichsergebnisse</h3>' +
+          '<p><b>📍 '+escapeHtml(loc)+'</b>' +
+          (product ? ' · 🔎 '+escapeHtml(product) : '')+'</p>' +
+          '<p class="muted">Aktuelle Angebote werden über die offiziellen Händlerquellen geprüft.</p>' +
+          '<div class="offer-grid">'+
+            compareMarkets.map(function(m){
+              return '<div class="offer">'+
+                '<b>'+escapeHtml(m.name)+'</b>'+
+                '<span>Offizielle Angebote prüfen</span>'+
+                '<button type="button" class="btn primary market-offer-btn" data-market="'+escapeHtml(m.name)+'" style="margin-top:7px">Angebote prüfen</button>'+
+              '</div>';
+            }).join("")+
           '</div>'+
         '</div>';
+
       results.querySelectorAll(".market-offer-btn").forEach(function(btn){
-        btn.addEventListener("click",function(){openMarketOffer(btn.getAttribute("data-market"));});
+        btn.addEventListener("click",function(){
+          openMarketOffer(btn.getAttribute("data-market"));
+        });
       });
-      results.scrollIntoView({behavior:"smooth",block:"start"});
+
+      setTimeout(function(){
+        results.scrollIntoView({behavior:"smooth",block:"start"});
+      },80);
     }
-  }catch(err){ showCompareError(err); }
+    return true;
+  }catch(err){
+    showCompareError(err);
+    return false;
+  }
 }
 
 function showCompareError(err){
