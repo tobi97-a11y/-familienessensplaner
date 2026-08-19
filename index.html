@@ -60,10 +60,10 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 
 <section id="recipes" class="view"><div class="card"><h2>🍲 Rezepte</h2><div class="grid"><div><label>Suche</label>
 <div class="autocomplete-wrap">
-<input id="recipeSearch" autocomplete="off" placeholder="z. B. Pasta, Curry, Burger …">
-<div id="recipeSuggestions" class="suggestions" style="display:none"></div>
+<input id="recipeSearch" autocomplete="off" list="recipeSuggestionList" placeholder="z. B. Pasta, Curry, Burger …" oninput="fepRenderRecipeSuggestions()" onfocus="fepRenderRecipeSuggestions(true)">
+<div id="recipeSuggestions" class="suggestions" style="display:none"></div><datalist id="recipeSuggestionList"></datalist>
 </div>
-<div class="recipe-autocomplete-help">🔎 <b>Ausfüllhilfe:</b> Tippe schon 1–2 Buchstaben ein – passende Rezepte werden direkt vorgeschlagen.</div>
+<div class="recipe-autocomplete-help">🔎 <b>Ausfüllhilfe:</b> Tippe 1–2 Buchstaben ein – die Vorschläge erscheinen direkt unter dem Feld.</div>
 </div><div><label>Filter</label><select id="recipeFilter" onchange="renderRecipes()"><option>Alle</option><option>Vegetarisch</option><option>Schnell</option><option>Kinderfreundlich</option></select></div></div></div><div id="recipeGrid" class="recipe-grid"></div></section>
 
 <section id="week" class="view">
@@ -82,10 +82,10 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 
 <section id="offers" class="view"><div class="card hero"><h2>🏆 Smart-Angebotsvergleich</h2><p class="muted">Die gespeicherte PLZ wird automatisch verwendet. Produkte, Einkaufsliste oder <b>alle Zutaten aus dem Wochenplan</b> können verglichen werden.</p><div class="grid"><div><label>PLZ / Ort</label><input id="offerZip"></div><div><label>Produkt oder Zutat</label>
 <div class="autocomplete-wrap">
-<input id="offerProduct" autocomplete="off" placeholder="z. B. Milch, Nudeln, Tomaten …">
-<div id="productSuggestions" class="suggestions" style="display:none"></div>
+<input id="offerProduct" autocomplete="off" list="ingredientSuggestionList" placeholder="z. B. Milch, Nudeln, Tomaten …" oninput="fepRenderIngredientSuggestions()" onfocus="fepRenderIngredientSuggestions(true)">
+<div id="productSuggestions" class="suggestions" style="display:none"></div><datalist id="ingredientSuggestionList"></datalist>
 </div>
-<div class="recipe-autocomplete-help">🔎 <b>Ausfüllhilfe:</b> Tippe 1–2 Buchstaben ein – passende Rezeptzutaten werden direkt vorgeschlagen.</div>
+<div class="recipe-autocomplete-help">🔎 <b>Ausfüllhilfe:</b> Tippe 1–2 Buchstaben ein – die Vorschläge erscheinen direkt unter dem Feld.</div>
 </div></div><div class="actions"><button onclick="compareProduct()">🏆 Vergleich starten</button><button class="secondary" onclick="useProfileZip()">📍 Profil-PLZ verwenden</button><button class="secondary" onclick="compareList()">🛒 Einkaufsliste vergleichen</button><button class="secondary" onclick="show('sources')">🔌 Datenquellen</button></div><div id="offerMsg"></div></div><div id="offerResults"></div></section>
 
 
@@ -281,6 +281,7 @@ function fepRenderBox(box, items, type){
    return '<button type="button" class="suggestion" data-name="'+encodeURIComponent(item)+'"><span>🛒 <b>'+esc(item)+'</b></span><small>'+(c.pack?('Packung '+formatQty(c.pack)+' '+esc(c.unit||"")):'Rezeptzutat')+'</small></button>';
  }).join("") : '<div class="suggestion"><span>Keine passenden Vorschläge gefunden.</span></div>';
  box.style.display="block";
+ box.setAttribute("aria-expanded","true");
  box.querySelectorAll("[data-name]").forEach(btn=>{
    btn.addEventListener("mousedown",e=>e.preventDefault());
    btn.addEventListener("click",()=>{
@@ -290,10 +291,31 @@ function fepRenderBox(box, items, type){
        renderRecipes();
      }else{
        offerProduct.value=name;
+       offerProduct.dispatchEvent(new Event("input",{bubbles:true}));
      }
      box.style.display="none";
    });
  });
+}
+
+function fepFillDatalist(id,names){
+ const dl=document.getElementById(id);
+ if(!dl)return;
+ dl.innerHTML=names.slice(0,20).map(n=>'<option value="'+esc(n)+'"></option>').join("");
+}
+function fepRenderRecipeSuggestions(showAll=false){
+ const input=document.getElementById("recipeSearch"), box=document.getElementById("recipeSuggestions");
+ if(!input||!box)return;
+ const items=fepRecipeMatches(input.value||"");
+ fepFillDatalist("recipeSuggestionList",items.map(r=>r.name));
+ fepRenderBox(box,items,"recipe");
+}
+function fepRenderIngredientSuggestions(showAll=false){
+ const input=document.getElementById("offerProduct"), box=document.getElementById("productSuggestions");
+ if(!input||!box)return;
+ const items=fepIngredientMatches(input.value||"");
+ fepFillDatalist("ingredientSuggestionList",items);
+ fepRenderBox(box,items,"ingredient");
 }
 function fepSetupAutocomplete(){
  const rs=document.getElementById("recipeSearch"), rb=document.getElementById("recipeSuggestions");
