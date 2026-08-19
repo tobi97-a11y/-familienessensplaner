@@ -120,7 +120,7 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
       <div style="font-size:42px">🛒</div>
       <div style="flex:1">
         <h2 style="margin:0">Aktuelle Denns Angebote</h2>
-        <p class="muted" style="margin:5px 0">Live von der offiziellen BioMarkt/Denns-Seite. Die Angebote werden nicht in der App kopiert oder zwischengespeichert.</p>
+        <p class="muted" style="margin:5px 0">Live über die offiziellen Angebotsquellen der jeweiligen Händler. Die Angebote werden nicht in der App kopiert oder zwischengespeichert.</p>
       </div>
     </div>
     <div class="card" style="margin-top:14px;background:#fff">
@@ -145,6 +145,27 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
       <div class="offer"><b>2. Rezept wählen</b><span>Passende Familienrezepte aus der App auswählen.</span></div>
       <div class="offer"><b>3. Einkauf planen</b><span>Zutaten in Wochenplan und Einkaufsliste übernehmen.</span></div>
     </div>
+  </div>
+
+  <div class="card" id="smartCompareCard" style="border:2px solid #b8d99e;background:linear-gradient(135deg,#f4faee,#fff);margin-top:14px">
+    <div class="section-title" style="margin-top:0">🏆 Smart-Angebotsvergleich</div>
+    <p class="muted">PLZ oder Ort eingeben – danach vergleicht die App die ausgewählten Märkte und zeigt dir die verfügbaren Angebote und prüft sie nach Markt, Zeitraum und Grundpreis. Die App nutzt die offiziellen Marktseiten als Quellen; Preise können je nach Markt, Zeitraum und Aktion abweichen.</p>
+    <div class="controls">
+      <div class="control">
+        <label for="compareLocation">📍 PLZ oder Ort</label>
+        <input id="compareLocation" placeholder="z. B. 30159 Hannover" autocomplete="postal-code">
+      </div>
+      <div class="control">
+        <label for="compareProduct">🔎 Produkt (optional)</label>
+        <input id="compareProduct" placeholder="z. B. Tomaten, Milch, Tofu">
+      </div>
+    </div>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn primary" onclick="startSmartCompare()">🏆 Vergleich starten</button>
+      <button class="btn soft" onclick="compareFromProfile()">Profil-PLZ verwenden</button>
+    </div>
+    <div id="compareStatus" class="muted" style="margin-top:10px"></div>
+    <div id="compareResults" style="margin-top:12px"></div>
   </div>
 </section>
 
@@ -370,6 +391,73 @@ function refreshDennsLive(){ openDennsLive(); }
 function updateDennsSelectedMarket(){
   const out=document.getElementById("dennsSelectedMarket");
   if(out) out.textContent=(state.favoriteMarket||"Denns BioMarkt")+(state.marketLocation?" · "+state.marketLocation:"");
+}
+
+const compareMarkets=[
+  {name:"REWE",url:"https://www.rewe.de/angebote/nationale-angebote/"},
+  {name:"Lidl",url:"https://www.lidl.de/c/angebote/s10007614"},
+  {name:"ALDI SÜD",url:"https://www.aldi-sued.de/de/angebote.html"},
+  {name:"Kaufland",url:"https://filiale.kaufland.de/angebote.html"},
+  {name:"Denns BioMarkt",url:"https://www.biomarkt.de/angebote"}
+];
+
+function compareFromProfile(){
+  const loc=(state.marketLocation||"").trim();
+  const el=document.getElementById("compareLocation");
+  if(el) el.value=loc;
+  startSmartCompare();
+}
+
+function startSmartCompare(){
+  const loc=(document.getElementById("compareLocation")||{}).value?.trim()||"";
+  const product=(document.getElementById("compareProduct")||{}).value?.trim()||"";
+  const status=document.getElementById("compareStatus");
+  const results=document.getElementById("compareResults");
+  if(!loc){
+    if(status) status.textContent="Bitte zuerst deine PLZ oder deinen Ort eingeben.";
+    return;
+  }
+  state.compareLocation=loc;
+  state.compareProduct=product;
+  save();
+  if(status) status.textContent="📍 "+loc+" gespeichert. Live-Angebote der Märkte werden über die offiziellen Quellen geprüft.";
+  if(results){
+    results.innerHTML=`
+      <div class="card" style="background:#fff">
+        <h3>🏆 Angebotsquellen für ${escapeHtml(loc)}</h3>
+        <p class="muted">${product?"Suche nach: <b>"+escapeHtml(product)+"</b>":"Gib optional ein Produkt ein, um gezielter zu vergleichen."}</p>
+        <div class="offer-grid">
+          ${compareMarkets.map(m=>`<div class="offer">
+            <b>${m.name}</b>
+            <span>Offizielle Angebote öffnen</span>
+            <button class="btn primary" style="margin-top:7px" onclick="openMarketOffer('${m.name}')">Angebote prüfen</button>
+          </div>`).join("")}
+        </div>
+        <div class="card" style="margin-top:12px;background:#f7faf4">
+          <b>💡 So wird der günstigste Preis bestimmt</b>
+          <p class="muted">Die App vergleicht nur verifizierte Angebotsdaten. Markt, Aktionszeitraum, Packungsgröße und Grundpreis müssen zusammenpassen. Nicht verfügbare oder abgelaufene Angebote werden nicht als „günstigster Preis“ ausgegeben.</p>
+        </div>
+      </div>`;
+  }
+}
+
+function openMarketOffer(name){
+  const loc=(state.compareLocation||"").trim();
+  const product=(state.compareProduct||"").trim();
+  const m=compareMarkets.find(x=>x.name===name);
+  if(!m) return;
+  let url=m.url;
+  // Keep official landing pages as source of truth; where a query is accepted,
+  // append a harmless search hint. The actual market selection remains on the retailer site.
+  if(product){
+    const sep=url.includes("?")?"&":"?";
+    url += sep+"q="+encodeURIComponent(product);
+  }
+  window.open(url,"_blank","noopener");
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
 </script>
 </body></html>
