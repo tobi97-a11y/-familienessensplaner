@@ -37,7 +37,7 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
 <div class="card controls">
 <div class="control"><label>Familiengröße</label><input id="family" type="number" min="1" value="4"></div>
 <div class="control"><label>Wochenbudget (€)</label><input id="budget" type="number" min="0" value="150"></div>
-<div class="control"><label>Supermarkt</label><select id="store"><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option></select></div>
+<div class="control"><label>Supermarkt</label><select id="store"><option value="Denns BioMarkt">🌱 Denns BioMarkt</option><option value="REWE">🛒 REWE</option><option value="Lidl">🛒 Lidl</option><option value="ALDI SÜD">🛒 ALDI SÜD</option><option value="Kaufland">🛒 Kaufland</option></select></div>
 <div class="control"><label>Ernährung</label><select id="diet"><option>Alle</option><option>Vegan</option><option>Vegetarisch</option></select></div>
 <div class="control"><label>Max. Kochzeit</label><select id="maxTime"><option value="999">egal</option><option value="20">20 Min.</option><option value="30">30 Min.</option><option value="40">40 Min.</option></select></div>
 <div class="control"><label>Priorität</label><select id="priority"><option value="cheap">Günstig</option><option value="fast">Schnell</option><option value="prep">Meal Prep</option><option value="kid">Kinderfreundlich</option></select></div>
@@ -128,7 +128,7 @@ const DATA={"recipes": [{"id": "lentil", "name": "Vegane Linsen-Bolognese", "veg
 const R=DATA.recipes, O=DATA.offers;
 const days=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
 const urls={"REWE":"https://www.rewe.de/angebote/nationale-angebote/","Lidl":"https://www.lidl.de/c/online-prospekte/s10005610","ALDI SÜD":"https://www.aldi-sued.de/angebote","Kaufland":"https://filiale.kaufland.de/prospekte.html"};
-let state=JSON.parse(localStorage.getItem("fep_complete")||"null")||{family:4,budget:150,store:"REWE",diet:"Alle",maxTime:999,priority:"cheap",avoid:"",dislike:"",pantry:[],week:Array(7).fill(""),favorites:[],ratings:{},checks:{},lastWeek:[],favoriteMarket:"Denns BioMarkt",marketLocation:""};
+let state=JSON.parse(localStorage.getItem("fep_complete")||"null")||{family:4,budget:150,store:"Denns BioMarkt",diet:"Alle",maxTime:999,priority:"cheap",avoid:"",dislike:"",pantry:[],week:Array(7).fill(""),favorites:[],ratings:{},checks:{},lastWeek:[],favoriteMarket:"Denns BioMarkt",marketLocation:""};
 
 function save(){localStorage.setItem("fep_complete",JSON.stringify(state));updateDashboard()}
 function syncInputs(){family.value=state.family;budget.value=state.budget;store.value=state.store;diet.value=state.diet;maxTime.value=state.maxTime;priority.value=state.priority;avoid.value=state.avoid;dislike.value=state.dislike;renderPantry();updateDashboard()}
