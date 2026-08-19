@@ -174,7 +174,7 @@ function updateDashboard(){let chosen=state.week.map(id=>R.find(r=>r.id===id)).f
   const warn=document.getElementById("budgetWarning");
   if(warn) warn.textContent=base>(+state.budget||0)?"⚠️ Plan über Budget":"✅ Plan im Budget";
 }
-function go(id){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));if(id==="week")renderWeek();if(id==="recipes")renderRecipes();if(id==="offers")renderOffers();if(id==="shopping")renderShopping();if(id==="profile")renderFavorites()}
+function go(id){const target=document.getElementById(id);if(!target)return;document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));target.classList.add("active");document.querySelectorAll(".bottom button").forEach(b=>b.classList.toggle("active",b.dataset.go===id));if(id==="week")renderWeek();if(id==="recipes")renderRecipes();if(id==="offers")renderOffers();if(id==="shopping")renderShopping();if(id==="profile")renderFavorites()}
 document.querySelectorAll(".bottom button").forEach(b=>b.onclick=()=>go(b.dataset.go));
 family.oninput=e=>{state.family=+e.target.value||1;save();renderShopping()};budget.oninput=e=>{state.budget=+e.target.value||0;save()};store.onchange=e=>{state.store=e.target.value;save();renderOffers()};diet.onchange=e=>{state.diet=e.target.value;save();renderRecipes()};maxTime.onchange=e=>{state.maxTime=+e.target.value;save()};priority.onchange=e=>{state.priority=e.target.value;save()};avoid.oninput=e=>{state.avoid=e.target.value;save()};dislike.oninput=e=>{state.dislike=e.target.value;save()};
 
@@ -366,9 +366,6 @@ function openFavoriteMarket(){
 
 function openDennsLive(){ window.open("https://www.biomarkt.de/angebote","_blank","noopener"); }
 function refreshDennsLive(){ openDennsLive(); }
-  const out=document.getElementById("dennsSelectedMarket");
-  if(out) out.textContent=(state.favoriteMarket||"Denns BioMarkt")+(state.marketLocation?" · "+state.marketLocation:"");
-}
 
 function updateDennsSelectedMarket(){
   const out=document.getElementById("dennsSelectedMarket");
