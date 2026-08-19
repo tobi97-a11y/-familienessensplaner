@@ -418,58 +418,61 @@ function compareFromProfile(){
 
 function startSmartCompare(){
   try{
-    const locEl=document.getElementById("compareLocation");
-    const productEl=document.getElementById("compareProduct");
-    const loc=(locEl ? locEl.value : "").trim();
-    const product=(productEl ? productEl.value : "").trim();
+    const loc=(document.getElementById("compareLocation")?.value||"").trim();
+    const product=(document.getElementById("compareProduct")?.value||"").trim();
     const status=document.getElementById("compareStatus");
     const results=document.getElementById("compareResults");
 
     if(!loc){
-      if(status) status.textContent="📍 Bitte deine PLZ oder deinen Ort eingeben.";
-      if(locEl) locEl.focus();
-      return false;
+      if(status) status.textContent="📍 Bitte zuerst PLZ oder Ort eingeben.";
+      document.getElementById("compareLocation")?.focus();
+      return;
     }
 
-    // Save only the comparison fields; do not depend on the dashboard renderer.
     try{
-      state.compareLocation=loc;
-      state.compareProduct=product;
-      localStorage.setItem("fep_compare", JSON.stringify({location:loc,product:product}));
+      state.compareLocation=loc; state.compareProduct=product;
+      localStorage.setItem("fep_compare",JSON.stringify({location:loc,product:product}));
     }catch(_){}
 
-    if(status) status.textContent="✅ Vergleich für "+loc+" gestartet.";
+    if(status) status.innerHTML="✅ Vergleich für <b>"+escapeHtml(loc)+"</b>"+(product?" · <b>"+escapeHtml(product)+"</b>":"")+" gestartet.";
+
+    const q=product ? encodeURIComponent(product) : "";
+    const rows=compareMarkets.map(function(m){
+      let label="Angebote prüfen";
+      let note="Offizielle Angebotsseite öffnen";
+      if(m.name==="REWE" && /^99817\b/i.test(loc)){
+        note="📍 REWE-Märkte in 99817 sind verfügbar";
+      }
+      if(m.name==="Denns BioMarkt") note="🌱 Bio-Angebote / Handzettel";
+      return '<div class="card market-result" style="margin:0">'+
+        '<div class="row" style="justify-content:space-between;align-items:center;gap:10px">'+
+          '<div><h3 style="margin:0">'+escapeHtml(m.name)+'</h3><div class="muted">'+note+'</div></div>'+
+          '<span class="badge" style="background:#eef7e8;color:#2d5d3a">Quelle</span>'+
+        '</div>'+
+        '<div class="muted" style="margin-top:8px">'+
+          (product ? 'Suche nach „'+escapeHtml(product)+'“ auf der offiziellen Angebotsseite.' : 'Aktuelle Angebote und Prospekte ansehen.')+
+        '</div>'+
+        '<button type="button" class="btn primary market-offer-btn" data-market="'+escapeHtml(m.name)+'" style="margin-top:10px">'+label+'</button>'+
+      '</div>';
+    }).join("");
 
     if(results){
-      results.innerHTML =
-        '<div class="card" style="background:#fff">' +
-          '<h3>🏆 Märkte für '+escapeHtml(loc)+'</h3>' +
-          '<p class="muted">'+
-            (product ? 'Gesucht: <b>'+escapeHtml(product)+'</b><br>' : '')+
-            'Öffne die offiziellen Angebote des jeweiligen Marktes. Die App zeigt keine erfundenen Preise; nur verifizierte Preise werden als günstigster Preis markiert.'+
-          '</p>'+
-          '<div class="offer-grid">'+
-            compareMarkets.map(function(m){
-              return '<div class="offer">'+
-                '<b>'+escapeHtml(m.name)+'</b>'+
-                '<span>Aktuelle Angebote prüfen</span>'+
-                '<button type="button" class="btn primary market-offer-btn" data-market="'+escapeHtml(m.name)+'" style="margin-top:7px">Angebote prüfen</button>'+
-              '</div>';
-            }).join("")+
+      results.innerHTML=
+        '<div class="card" style="background:#fff;border:2px solid #b8d99e">'+
+          '<h2 style="margin-top:0">🏆 Vergleichsergebnisse</h2>'+
+          '<p class="muted">Standort: <b>'+escapeHtml(loc)+'</b>'+(product?' · Produkt: <b>'+escapeHtml(product)+'</b>':'')+'</p>'+
+          '<div class="offer-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">'+rows+'</div>'+
+          '<div class="card" style="margin-top:12px;background:#f7faf4">'+
+            '<b>ℹ️ Warum sehe ich noch keinen „günstigsten Preis“?</b>'+
+            '<p class="muted" style="margin-bottom:0">Die Händler stellen ihre Live-Preise nicht einheitlich für eine externe App bereit. V22 zeigt deshalb zuerst verifizierbare Angebotsquellen. Ein Preis wird erst als Gewinner markiert, wenn Produkt, Packungsgröße, Zeitraum und Markt eindeutig verifiziert sind.</p>'+
           '</div>'+
         '</div>';
-
       results.querySelectorAll(".market-offer-btn").forEach(function(btn){
-        btn.addEventListener("click",function(){
-          openMarketOffer(btn.getAttribute("data-market"));
-        });
+        btn.addEventListener("click",function(){openMarketOffer(btn.getAttribute("data-market"));});
       });
+      results.scrollIntoView({behavior:"smooth",block:"start"});
     }
-    return true;
-  }catch(err){
-    showCompareError(err);
-    return false;
-  }
+  }catch(err){ showCompareError(err); }
 }
 
 function showCompareError(err){
@@ -482,7 +485,7 @@ function showCompareError(err){
 document.addEventListener("DOMContentLoaded", function(){
   const start=document.getElementById("startCompareBtn");
   const profile=document.getElementById("profileCompareBtn");
-  if(start) start.addEventListener("click", startSmartCompare);
+  if(start) start.addEventListener("click", function(){ start.disabled=true; start.textContent="⏳ Vergleiche…"; startSmartCompare(); setTimeout(function(){start.disabled=false;start.textContent="🏆 Vergleich starten";},500); });
   if(profile) profile.addEventListener("click", compareFromProfile);
 
   try{
