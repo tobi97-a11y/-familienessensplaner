@@ -1,0 +1,16 @@
+Die 12 Rezeptbilder sind jetzt als echte JPG-Dateien im Ordner images enthalten.
+Die App verweist auf diese JPG-Dateien.
+
+Enthalten:
+spaghetti.jpg
+chicken.jpg
+chili.jpg
+curry.jpg
+pesto.jpg
+feta.jpg
+lentil.jpg
+tofu.jpg
+oat.jpg
+soup.jpg
+burger.jpg
+casserole.jpg

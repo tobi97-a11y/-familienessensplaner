@@ -1,0 +1,26 @@
+FAMILIENESSENSPLANER – NEUAUFSETZEN
+
+1. ZIP-Datei entpacken.
+2. Den Inhalt des Ordners "FamilienEssensPlaner" in dein GitHub-Repository hochladen.
+3. Wichtig: index.html muss direkt im Hauptverzeichnis des Repositorys liegen.
+4. Der Ordner "images" muss direkt neben index.html liegen.
+5. In GitHub auf "Commit changes" klicken.
+6. GitHub Pages muss auf den Branch "main" und den Root-Ordner (/) zeigen.
+7. Danach die GitHub-Pages-Adresse öffnen und Safari einmal neu laden.
+
+ENTHALTEN:
+- Startseite
+- Familienprofil
+- PLZ/Ort-Speicherung
+- automatische Profil-PLZ im Angebotsvergleich
+- Wochenplan
+- Rezepte
+- Rezeptbilder
+- Einkaufsliste
+- Angebotsvergleich
+- REWE, Lidl, ALDI SÜD, Kaufland, Denns BioMarkt und EDEKA
+
+WICHTIG:
+Der Preisvergleich in dieser Version verwendet Demo-/Beispieldaten.
+Für echte Live-Preise benötigen wir anschließend offizielle Händler-
+Datenquellen/API-Anbindungen.
