@@ -24,15 +24,17 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 .modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:50}.modal.open{display:flex}.sheet{background:#fff;width:100%;max-height:88vh;overflow:auto;border-radius:25px 25px 0 0;padding:20px}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.recipe-grid{grid-template-columns:repeat(2,1fr)}.quick{grid-template-columns:repeat(2,1fr)}}@media(max-width:480px){.grid,.recipe-grid{grid-template-columns:1fr}.day{grid-template-columns:78px 1fr}.day img{width:78px;height:62px}.day button{grid-column:2}.quick{grid-template-columns:repeat(2,1fr)}}
 
-.autocomplete-wrap{position:relative}
-.suggestions{position:absolute;z-index:50;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #d5ddd5;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);overflow:hidden}
-.suggestion{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;border:0;background:#fff;text-align:left;padding:13px 15px;cursor:pointer;font:inherit}
-.suggestion:hover,.suggestion:focus{background:#f1f7ef}
-.suggestion small{color:#6f786f}
-.search-help{margin:10px 0 16px;padding:12px 14px;background:#f4f8f1;border-radius:14px;color:#667066;display:flex;flex-direction:column;gap:7px}
+
+.autocomplete-wrap{position:relative;width:100%}
+.autocomplete-wrap input{width:100%;box-sizing:border-box}
+.suggestions{position:absolute;z-index:9999;left:0;right:0;top:calc(100% + 5px);background:#fff;border:1px solid #d5ddd5;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.16);overflow:hidden;max-height:280px;overflow-y:auto}
+.suggestion{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;border:0;background:#fff;text-align:left;padding:12px 14px;cursor:pointer;font:inherit}
+.suggestion:hover,.suggestion:focus{background:#eef6eb}
+.suggestion small{color:#687268}
+.search-help{margin:8px 0 14px;padding:12px 14px;background:#f4f8f1;border-radius:14px;color:#667066;display:flex;flex-direction:column;gap:8px}
 .quick-products{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid #d7e2d4;background:#fff;border-radius:999px;padding:7px 10px;cursor:pointer}
-.price-preview{margin-top:10px;padding:11px 13px;border-radius:12px;background:#eef7eb}
+.recipe-autocomplete-help{margin-top:8px;font-size:.92em;color:#687268}
 </style></head>
 <body>
 <header><h1>FamilienEssensPlaner</h1><p>Planen · Kochen · Sparen · Einkaufen 🌱</p></header>
@@ -48,7 +50,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 
 <section id="profile" class="view"><div class="card"><h2>👨‍👩‍👧 Familienprofil</h2><p class="muted">Alles wird auf diesem Gerät gespeichert.</p><div class="grid"><div><label>PLZ / Ort</label><input id="profileZip"></div><div><label>Personen</label><input id="profilePeople" type="number" min="1"></div><div><label>Wochenbudget (€)</label><input id="profileBudget" type="number" min="0"></div><div><label>Lieblingsmarkt</label><select id="profileMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div><div><label>Ernährung</label><select id="diet"><option>Alles</option><option>Vegetarisch</option><option>Vegan</option></select></div><div><label>Kochzeit</label><select id="cooktime"><option>Egal</option><option>max. 20 Minuten</option><option>max. 30 Minuten</option><option>max. 45 Minuten</option></select></div></div><div class="actions"><button onclick="saveProfile()">Profil speichern</button><button class="secondary" onclick="show('offers')">Angebote vergleichen</button></div><div id="profileMsg"></div></div></section>
 
-<section id="recipes" class="view"><div class="card"><h2>🍲 Rezepte</h2><div class="grid"><div><label>Suche</label><input id="recipeSearch" oninput="renderRecipes()" placeholder="z. B. Pasta"></div><div><label>Filter</label><select id="recipeFilter" onchange="renderRecipes()"><option>Alle</option><option>Vegetarisch</option><option>Schnell</option><option>Kinderfreundlich</option></select></div></div></div><div class="card"><h3>🧾 Aktuelle Planpreise für Zutaten</h3><p class="small">Richtpreise pro üblicher Einkaufseinheit – keine Live-Händlerpreise.</p><div class="grid"><div><b>Spaghetti</b><div class="small">1.19 €</div></div><div><b>Tomaten</b><div class="small">1.49 €</div></div><div><b>Hackfleisch</b><div class="small">4.49 €</div></div><div><b>Zwiebel</b><div class="small">0.89 €</div></div><div><b>Hähnchen</b><div class="small">5.49 €</div></div><div><b>Reis</b><div class="small">1.79 €</div></div><div><b>Kokosmilch</b><div class="small">1.49 €</div></div><div><b>Paprika</b><div class="small">1.99 €</div></div><div><b>Kidneybohnen</b><div class="small">0.89 €</div></div><div><b>Mais</b><div class="small">0.99 €</div></div><div><b>Linsen</b><div class="small">1.49 €</div></div><div><b>Curry</b><div class="small">1.29 €</div></div><div><b>Feta</b><div class="small">1.99 €</div></div><div><b>Zucchini</b><div class="small">1.29 €</div></div><div><b>Pesto</b><div class="small">1.49 €</div></div><div><b>Parmesan</b><div class="small">2.49 €</div></div><div><b>Tofu</b><div class="small">2.29 €</div></div><div><b>Wraps</b><div class="small">1.49 €</div></div><div><b>Salat</b><div class="small">1.29 €</div></div><div><b>Haferflocken</b><div class="small">1.19 €</div></div><div><b>Banane</b><div class="small">1.49 €</div></div><div><b>Milch</b><div class="small">1.19 €</div></div><div><b>Eier</b><div class="small">2.49 €</div></div><div><b>Kartoffeln</b><div class="small">2.49 €</div></div><div><b>Karotten</b><div class="small">1.29 €</div></div><div><b>Sahne</b><div class="small">1.09 €</div></div><div><b>Burgerbrötchen</b><div class="small">1.49 €</div></div><div><b>Patty</b><div class="small">3.49 €</div></div><div><b>Käse</b><div class="small">2.49 €</div></div><div><b>Gemüse</b><div class="small">2.49 €</div></div><div><b>Chiasamen</b><div class="small">3.49 €</div></div><div><b>Beeren</b><div class="small">2.49 €</div></div></div></div><div id="recipeGrid" class="recipe-grid"></div></section>
+<section id="recipes" class="view"><div class="card"><h2>🍲 Rezepte</h2><div class="grid"><div><label>Suche</label><input id="recipeSearch" oninput="renderRecipes()" placeholder="z. B. Pasta"></div><div><label>Filter</label><select id="recipeFilter" onchange="renderRecipes()"><option>Alle</option><option>Vegetarisch</option><option>Schnell</option><option>Kinderfreundlich</option></select></div></div></div><div class="card"><h3>🧾 Aktuelle Richtwerte für Zutaten</h3><p class="small">Richtpreise pro üblicher Einkaufseinheit – keine Live-Händlerpreise.</p><div class="grid"><div><b>Spaghetti</b><div class="small">1.19 €</div></div><div><b>Tomaten</b><div class="small">1.49 €</div></div><div><b>Hackfleisch</b><div class="small">4.49 €</div></div><div><b>Zwiebel</b><div class="small">0.89 €</div></div><div><b>Hähnchen</b><div class="small">5.49 €</div></div><div><b>Reis</b><div class="small">1.79 €</div></div><div><b>Kokosmilch</b><div class="small">1.49 €</div></div><div><b>Paprika</b><div class="small">1.99 €</div></div><div><b>Kidneybohnen</b><div class="small">0.89 €</div></div><div><b>Mais</b><div class="small">0.99 €</div></div><div><b>Linsen</b><div class="small">1.49 €</div></div><div><b>Curry</b><div class="small">1.29 €</div></div><div><b>Feta</b><div class="small">1.99 €</div></div><div><b>Zucchini</b><div class="small">1.29 €</div></div><div><b>Pesto</b><div class="small">1.49 €</div></div><div><b>Parmesan</b><div class="small">2.49 €</div></div><div><b>Tofu</b><div class="small">2.29 €</div></div><div><b>Wraps</b><div class="small">1.49 €</div></div><div><b>Salat</b><div class="small">1.29 €</div></div><div><b>Haferflocken</b><div class="small">1.19 €</div></div><div><b>Banane</b><div class="small">1.49 €</div></div><div><b>Milch</b><div class="small">1.19 €</div></div><div><b>Eier</b><div class="small">2.49 €</div></div><div><b>Kartoffeln</b><div class="small">2.49 €</div></div><div><b>Karotten</b><div class="small">1.29 €</div></div><div><b>Sahne</b><div class="small">1.09 €</div></div><div><b>Burgerbrötchen</b><div class="small">1.49 €</div></div><div><b>Patty</b><div class="small">3.49 €</div></div><div><b>Käse</b><div class="small">2.49 €</div></div><div><b>Gemüse</b><div class="small">2.49 €</div></div><div><b>Chiasamen</b><div class="small">3.49 €</div></div><div><b>Beeren</b><div class="small">2.49 €</div></div></div></div><div id="recipeGrid" class="recipe-grid"></div></section>
 
 <section id="week" class="view">
 <div class="card hero"><h2>📅 Wochenplan</h2>
@@ -186,7 +188,7 @@ function renderWeek(){
    const r=RECIPES.find(x=>x.id===d.recipeId);
    if(!r)return '<div class="day"><div><b>'+d.day+'</b></div><div><span class="muted">Noch kein Rezept ausgewählt.</span></div><button class="secondary" onclick="startManualWeek()">Auswählen</button></div>';
    return '<div class="day"><img src="'+r.img+'"><div><b>'+d.day+'</b><div>'+r.name+'</div><span class="small">'+r.time+' Min. · Zutaten ca. '+ingredientCost(r).toFixed(2).replace(".",",")+' €</span></div><button onclick="openRecipe('+r.id+')">Rezept</button></div>'
- }).join("")+(s.week.some(d=>!d.recipeId)?'<div class="notice">ℹ️ Einige Tage sind noch offen. Du kannst sie selbst auswählen oder mit „Automatisch planen“ füllen.</div>':'<div class="notice ok">💶 Geschätzte Zutatenkosten: <b>'+total.toFixed(2).replace(".",",")+' €</b></div>');
+ }).join("")+(s.week.some(d=>!d.recipeId)?'<div class="notice">ℹ️ Einige Tage sind noch offen. Du kannst sie selbst auswählen oder mit „Automatisch planen“ füllen.</div>':'');
  renderManualPicker();
 }
 function addWeekToShop(){const s=getState();if(!s.week.length){generateWeek()}s=getState();s.week.forEach(d=>{const r=RECIPES.find(x=>x.id===d.recipeId);r.ing.forEach(x=>{const y=s.shopping.find(i=>i.name===x);if(y)y.qty++;else s.shopping.push({name:x,qty:1,done:false})})});put(s);show("shopping")}
@@ -223,47 +225,81 @@ function ingredientCompareRows(items){
  });
 }
 async 
-function normalizeProductText(v){return (v||"").toLocaleLowerCase("de-DE").trim();}
-function productCatalogNames(){
-  if(typeof INGREDIENT_CATALOG==="undefined") return [];
-  return Object.keys(INGREDIENT_CATALOG);
-}
-function productMatches(q){
-  const n=normalizeProductText(q);
-  const names=productCatalogNames();
-  if(!n) return names.slice(0,10);
-  return names.filter(name=>{
-    const c=INGREDIENT_CATALOG[name]||{};
-    return normalizeProductText(name).includes(n) || (c.aliases||[]).some(a=>normalizeProductText(a).includes(n));
-  }).slice(0,10);
-}
-function chooseProduct(name){
-  const input=document.getElementById("offerProduct");
-  if(input){input.value=name; updateProductSuggestions(false); showProductPricePreview(name);}
-}
-function updateProductSuggestions(showEmpty=false){
-  const input=document.getElementById("offerProduct"), box=document.getElementById("productSuggestions");
-  if(!input||!box)return;
-  const q=input.value||"", matches=productMatches(q);
-  if(!q && !showEmpty){box.style.display="none";return;}
-  box.innerHTML=matches.length?matches.map(name=>{
-    const c=INGREDIENT_CATALOG[name]||{};
-    return '<button type="button" class="suggestion" onclick="chooseProduct('+JSON.stringify(name)+')"><span>🛒 <b>'+esc(name)+'</b></span><small>'+(c.pack?('Packung '+formatQty(c.pack)+' '+esc(c.unit||'')):'Rezeptzutat')+'</small></button>';
-  }).join(""):'<div class="suggestion"><span>Keine passende Rezeptzutat gefunden</span></div>';
-  box.style.display="block";
-}
-function showProductPricePreview(name){
-  const c=INGREDIENT_CATALOG[name], help=document.getElementById("productSearchHelp");
-  if(!c||!help)return;
-  let preview=help.querySelector(".price-preview");
-  if(!preview){preview=document.createElement("div");preview.className="price-preview";help.appendChild(preview);}
-  preview.innerHTML='💶 <b>Planpreis vor dem Vergleich:</b> '+Number(c.price||0).toFixed(2).replace(".",",")+' € · Packung '+formatQty(c.pack||1)+' '+esc(c.unit||"");
-}
+
+
+
+
+
 document.addEventListener("click",function(e){
   const wrap=document.querySelector(".autocomplete-wrap");
   const box=document.getElementById("productSuggestions");
   if(wrap&&box&&!wrap.contains(e.target))box.style.display="none";
 });
+
+function normalizeProductText(v){
+ return String(v||"").toLocaleLowerCase("de-DE").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+}
+function productCatalogNames(){
+ return (typeof INGREDIENT_CATALOG==="undefined") ? [] : Object.keys(INGREDIENT_CATALOG);
+}
+function productMatches(q){
+ const n=normalizeProductText(q);
+ const names=productCatalogNames();
+ if(!n) return names.slice(0,12);
+ return names.filter(name=>{
+   const c=INGREDIENT_CATALOG[name]||{};
+   return normalizeProductText(name).includes(n) ||
+          (c.aliases||[]).some(a=>normalizeProductText(a).includes(n));
+ }).slice(0,12);
+}
+function renderSuggestions(inputId,boxId,onPick,showEmpty){
+ const input=document.getElementById(inputId), box=document.getElementById(boxId);
+ if(!input||!box)return;
+ const q=input.value||"", matches=productMatches(q);
+ if(!q&&!showEmpty){box.style.display="none";return;}
+ box.innerHTML=matches.length ? matches.map(name=>{
+   const c=INGREDIENT_CATALOG[name]||{};
+   return '<button type="button" class="suggestion" data-pick="'+encodeURIComponent(name)+'"><span>🛒 <b>'+esc(name)+'</b></span><small>'+(c.pack?('Packung '+formatQty(c.pack)+' '+esc(c.unit||"")):'Rezeptzutat')+'</small></button>';
+ }).join("") : '<div class="suggestion"><span>Keine passende Rezeptzutat</span></div>';
+ box.querySelectorAll("[data-pick]").forEach(btn=>{
+   btn.addEventListener("mousedown",function(e){e.preventDefault();});
+   btn.addEventListener("click",function(){
+     const name=decodeURIComponent(this.getAttribute("data-pick"));
+     onPick(name);
+     box.style.display="none";
+   });
+ });
+ box.style.display="block";
+}
+function chooseProduct(name){
+ const input=document.getElementById("offerProduct");
+ if(input){input.value=name; showProductPricePreview(name);}
+}
+function updateProductSuggestions(showEmpty=false){
+ renderSuggestions("offerProduct","productSuggestions",chooseProduct,showEmpty);
+}
+function showProductPricePreview(name){
+ const c=(typeof INGREDIENT_CATALOG!=="undefined")?INGREDIENT_CATALOG[name]:null;
+ const help=document.getElementById("productSearchHelp");
+ if(!c||!help)return;
+ let preview=help.querySelector(".price-preview");
+ if(!preview){preview=document.createElement("div");preview.className="price-preview";help.appendChild(preview);}
+ preview.innerHTML='💶 Richtwert für die Planung: <b>'+Number(c.price||0).toFixed(2).replace(".",",")+' €</b> · Packung '+formatQty(c.pack||1)+' '+esc(c.unit||"");
+}
+function setupRecipeIngredientAutocomplete(){
+ document.querySelectorAll("[data-recipe-ingredient-input]").forEach(input=>{
+   const boxId=input.getAttribute("data-suggestions-id");
+   const box=document.getElementById(boxId);
+   if(!box)return;
+   const pick=name=>{
+     input.value=name;
+     input.dispatchEvent(new Event("input",{bubbles:true}));
+   };
+   input.addEventListener("input",()=>renderSuggestions(input.id,boxId,pick,false));
+   input.addEventListener("focus",()=>renderSuggestions(input.id,boxId,pick,true));
+   input.addEventListener("blur",()=>setTimeout(()=>box.style.display="none",180));
+ });
+}
 function compareList(){
  const s=getState(), items=allRecipeIngredients();
  if(!items.length){alert("Bitte zuerst mindestens einen Tag im Wochenplan mit einem Rezept belegen.");show("week");return}
