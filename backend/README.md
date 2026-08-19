@@ -1,37 +1,22 @@
-# FamilienEssensPlaner V29 Backend
+# V30 Backend
 
-Dieses Backend ist die Grundlage für den echten Angebotsvergleich.
+V30 enthält den ersten echten Provider auf Basis einer offiziellen öffentlichen ALDI-SÜD-Angebotsseite.
 
 ## Start
-
-```bash
 npm install
 npm start
-```
 
-Danach:
-- `GET /api/health`
-- `GET /api/providers`
-- `POST /api/compare`
+## API
+GET /api/health
+GET /api/providers
+POST /api/compare
 
 Beispiel:
+{"zip":"99817","products":["Milch","Eier"]}
 
-```json
-{
-  "zip": "99817",
-  "products": ["Milch", "Eier", "Tomaten"]
-}
-```
+## Datenstatus
+OFFICIAL_SOURCE_UNPARSED_MARKUP = Daten wurden von der offiziellen öffentlichen Angebotsseite abgerufen, aber die HTML-Struktur muss vor einem produktiven Preisversprechen stabil verifiziert werden.
+DEMO = Fallback-Daten, niemals als Live kennzeichnen.
 
 ## Wichtig
-
-Der enthaltene Provider ist ausdrücklich als `DEMO` gekennzeichnet.
-Er behauptet keine Live-Händlerpreise.
-
-Für produktive Live-Daten wird je Händler ein zulässiger offizieller
-Datenfeed/API oder eine ausdrücklich erlaubte Aggregator-Schnittstelle
-als Provider implementiert.
-
-Die Provider-Schnittstelle ist absichtlich getrennt, damit REWE,
-ALDI SÜD, Lidl, Kaufland, Denns BioMarkt und weitere Quellen einzeln
-angeschlossen werden können.
+Die Seite kann ihr HTML/Markup jederzeit ändern. Für einen robusten produktiven Dienst sollte ein offizieller Feed/API oder eine ausdrücklich erlaubte Schnittstelle verwendet werden.
