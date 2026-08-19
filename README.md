@@ -86,3 +86,40 @@ Die Live-Angebotsautomatisierung ist als Produktfunktion vorgesehen, aber die en
 - Verknüpfung mit offiziellen Denns/BioMarkt-Angeboten
 - Markt- und zeitraumabhängige Angebote werden nicht als feste Preise in der App gespeichert
 - passende Rezepte können geöffnet und anschließend in den Wochenplan/Einkauf übernommen werden
+
+
+## V13 – Denns sichtbar
+- Denns Bio Angebote direkt auf der Startseite
+- großer „Angebote öffnen“-Button
+- direkter offizieller Angebotslink: biomarkt.de/angebote
+- Marktsuche bei Eingabe einer Stadt/PLZ
+
+
+## V14 – Markt im Familienprofil
+- Lieblingsmarkt direkt im Familienprofil auswählbar
+- Denns BioMarkt als Standardoption
+- PLZ/Ort speichern
+- gespeicherter Markt wird beim Öffnen der Angebote verwendet
+- weitere Händler: REWE, Lidl, ALDI, Kaufland
+
+
+## V15 – Denns direkt im Supermarkt-Feld
+- Denns BioMarkt erscheint jetzt direkt im vorhandenen Supermarkt-Auswahlfeld
+- Denns BioMarkt ist die erste Auswahl
+- Standardmarkt des Planers auf Denns BioMarkt gesetzt
+- Lieblingsmarkt im Familienprofil bleibt zusätzlich gespeichert
+
+
+## V16 – Live-Denns-Angebote
+- eigener Live-Angebotsbereich in der App
+- offizielle BioMarkt/Denns-Angebotsseite wird direkt eingebettet
+- Aktualisieren-Button
+- Fallback zum Öffnen der offiziellen Seite, falls der Browser eine Einbettung blockiert
+- ausgewählter Markt aus dem Familienprofil wird angezeigt
+
+
+## V17 – Denns Live-Angebote Fix
+- leere Live-Fläche entfernt
+- offizieller Denns/BioMarkt-Angebotsbereich wird zuverlässig in einem neuen Tab geöffnet
+- ausgewählter Markt aus dem Familienprofil wird angezeigt
+- klare Erklärung, warum die externe Seite nicht in einem iframe angezeigt wird

@@ -112,38 +112,42 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
   <div id="dealResults"></div>
 </section>
 
+
 <section id="offers" class="view">
   <div class="section-title">🌱 Denns Bio – Live-Angebote</div>
-  <div class="card">
-    <div class="row" style="align-items:center;gap:12px">
-      <div style="font-size:34px">🛒</div>
+  <div class="card" style="border:2px solid #b8d99e;background:linear-gradient(135deg,#f4faee,#ffffff)">
+    <div class="row" style="align-items:center;gap:14px">
+      <div style="font-size:42px">🛒</div>
       <div style="flex:1">
         <h2 style="margin:0">Aktuelle Denns Angebote</h2>
-        <p class="muted" style="margin:4px 0">Die Angebotsseite wird direkt von BioMarkt/Denns geladen.</p>
+        <p class="muted" style="margin:5px 0">Live von der offiziellen BioMarkt/Denns-Seite. Die Angebote werden nicht in der App kopiert oder zwischengespeichert.</p>
       </div>
-      <button class="btn primary" onclick="refreshDennsLive()">↻ Aktualisieren</button>
+    </div>
+    <div class="card" style="margin-top:14px;background:#fff">
+      <h3>📍 Deinen Markt auswählen</h3>
+      <p id="dennsSelectedMarket" class="muted">Markt aus deinem Familienprofil.</p>
+      <button class="btn primary" onclick="openFavoriteMarket()">🌱 Angebote meines Marktes öffnen</button>
+      <button class="btn soft" onclick="openDennsLive()" style="margin-left:6px">🔗 Alle Denns Angebote öffnen</button>
     </div>
   </div>
+
   <div class="card">
     <div class="live-badge">● LIVE · OFFIZIELLE QUELLE</div>
-    <div id="dennsLiveFrameWrap" style="margin-top:10px">
-      <iframe id="dennsLiveFrame" title="Aktuelle Denns BioMarkt Angebote"
-        src="https://www.biomarkt.de/angebote"
-        style="width:100%;height:720px;border:1px solid #dfe7dc;border-radius:16px;background:#fff"
-        loading="lazy"></iframe>
-    </div>
-    <div class="card" style="margin-top:12px;background:#f7faf4">
-      <b>Falls die Live-Seite nicht eingebettet werden kann:</b>
-      <p class="muted">Einige Browser blockieren eingebettete Inhalte von anderen Webseiten. Dann öffnet der Button die offiziellen Angebote direkt in einem neuen Tab.</p>
-      <button class="btn primary" onclick="openDennsLive()">🌱 Denns Angebote direkt öffnen</button>
-    </div>
+    <h3 style="margin-top:12px">Warum öffnet sich die Seite separat?</h3>
+    <p class="muted">Die offizielle Angebotsseite erlaubt aus Sicherheitsgründen nicht zuverlässig die Anzeige innerhalb eines eingebetteten Fensters. Deshalb öffnen wir sie direkt – so siehst du garantiert die aktuelle Denns-Seite statt einer leeren Fläche.</p>
+    <button class="btn primary" onclick="openDennsLive()">🛒 Jetzt aktuelle Denns Angebote ansehen</button>
   </div>
+
   <div class="card">
-    <h3>📍 Dein ausgewählter Markt</h3>
-    <p id="dennsSelectedMarket" class="muted">Markt aus dem Familienprofil wird hier angezeigt.</p>
-    <button class="btn soft" onclick="openFavoriteMarket()">Markt & Angebote meines Profils öffnen</button>
+    <h3>💚 Danach geht's weiter</h3>
+    <div class="offer-grid">
+      <div class="offer"><b>1. Angebot ansehen</b><span>Aktuelle Produkte und Preise bei Denns prüfen.</span></div>
+      <div class="offer"><b>2. Rezept wählen</b><span>Passende Familienrezepte aus der App auswählen.</span></div>
+      <div class="offer"><b>3. Einkauf planen</b><span>Zutaten in Wochenplan und Einkaufsliste übernehmen.</span></div>
+    </div>
   </div>
 </section>
+
 
 
 <section id="shopping" class="view"><div class="section-title">🧺 Einkaufsliste</div><div class="card"><div class="row"><button class="btn primary" onclick="renderShopping()">Liste aktualisieren</button><button class="btn soft" onclick="window.print()">Drucken / PDF</button><button class="btn danger" onclick="clearChecks()">Abgehakt zurücksetzen</button></div><div class="space"></div><div class="progress"><div id="shopProgress"></div></div><div class="muted" id="shopProgressText" style="margin-top:5px"></div></div><div id="shoppingList"></div></section>
@@ -294,7 +298,7 @@ function renderPantry(){pantryTags.innerHTML=state.pantry.length?state.pantry.ma
 function removePantry(i){state.pantry.splice(i,1);save();renderPantry()}
 function renderShopping(){let totals={};state.week.map(id=>R.find(r=>r.id===id)).filter(Boolean).forEach(r=>r.ingredients.forEach(([item,q,u,cat])=>{let pantry=state.pantry.some(p=>p.toLowerCase()===item.toLowerCase());if(!pantry){let k=cat+"|"+item+"|"+u;totals[k]=(totals[k]||0)+q*(+state.family||4)/4}}));let entries=Object.entries(totals);let done=Object.values(state.checks).filter(Boolean).length;let total=entries.length;let pct=total?Math.round(done/total*100):0;shopProgress.style.width=pct+"%";shopProgressText.textContent=done+" von "+total+" erledigt";shoppingList.innerHTML=entries.length?entries.map(([k,q],i)=>{let [cat,item,u]=k.split("|");let key=cat+"|"+item;return `<div class="card" style="margin-top:10px"><div class="cat-title">${cat}</div><div class="check"><input type="checkbox" ${state.checks[key]?"checked":""} onchange="state.checks['${key.replace(/'/g,"\\'")}']=this.checked;save();renderShopping()"><div style="flex:1"><b>${item}</b><div class="muted">${Math.round(q*10)/10} ${u}</div></div></div></div>`}).join(""):'<div class="empty">Wähle Gerichte im Wochenplan. Die Einkaufsliste wird automatisch nach Warengruppen erstellt und Vorräte werden abgezogen.</div>'}
 function clearChecks(){state.checks={};save();renderShopping()}
-syncInputs();loadMarket();renderRecipes();renderWeek();renderShopping();renderSmartAnalysis();
+syncInputs();loadMarket();updateDennsSelectedMarket();renderRecipes();renderWeek();renderShopping();renderSmartAnalysis();
 
 
 function openDenns(){
@@ -360,12 +364,13 @@ function openFavoriteMarket(){
   }
 }
 
-function openDennsLive(){
-  window.open("https://www.biomarkt.de/angebote","_blank","noopener");
+function openDennsLive(){ window.open("https://www.biomarkt.de/angebote","_blank","noopener"); }
+function refreshDennsLive(){ openDennsLive(); }
+  const out=document.getElementById("dennsSelectedMarket");
+  if(out) out.textContent=(state.favoriteMarket||"Denns BioMarkt")+(state.marketLocation?" · "+state.marketLocation:"");
 }
-function refreshDennsLive(){
-  const f=document.getElementById("dennsLiveFrame");
-  if(f){ f.src="https://www.biomarkt.de/angebote?live="+Date.now(); }
+
+function updateDennsSelectedMarket(){
   const out=document.getElementById("dennsSelectedMarket");
   if(out) out.textContent=(state.favoriteMarket||"Denns BioMarkt")+(state.marketLocation?" · "+state.marketLocation:"");
 }
