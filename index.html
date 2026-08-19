@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#23382b"><meta name="apple-mobile-web-app-capable" content="yes">
+<title>FamilienEssensPlaner V27</title>
+<style>
+:root{--g:#23382b;--g2:#31533d;--p:#eef5ee;--line:#d7dfd7;--text:#26332b;--muted:#68736c;--gold:#b78919;--red:#a44b45;--white:#fff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f5f7f4;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding-bottom:88px}
+header{background:var(--g);color:#fff;padding:28px 20px;position:sticky;top:0;z-index:20}header h1{margin:0;font-size:29px}header p{margin:6px 0 0;opacity:.85}
+main{max-width:1000px;margin:auto;padding:18px 14px}.view{display:none}.view.active{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;margin:13px 0;box-shadow:0 3px 15px #2030200a}.hero{background:linear-gradient(135deg,#edf6e9,#fbfdf9);border-color:#c6dcae}
+h2{font-size:27px;margin:4px 0 12px}h3{margin:8px 0}.muted,.small{color:var(--muted);line-height:1.5}.small{font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px}.stat small{display:block;color:var(--muted);font-weight:800}.stat b{font-size:22px}
+label{display:block;font-size:14px;font-weight:800;margin:10px 0 5px;color:var(--muted)}input,select{width:100%;padding:13px;border:1px solid #cbd5cc;border-radius:13px;background:#fff;font-size:16px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:13px;padding:12px 16px;font-size:15px;font-weight:800;background:var(--g);color:#fff}button.secondary{background:#edf2ed;color:var(--text);border:1px solid var(--line)}button.danger{background:#fff0ee;color:var(--red);border:1px solid #edc6c1}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.quick button{background:#fff;color:var(--text);border:1px solid var(--line);padding:16px;text-align:left}.quick span{font-size:28px;display:block}.quick small{color:var(--muted)}
+.notice{padding:12px 14px;border-radius:14px;background:#fff7df;border:1px solid #ead79c;margin-top:12px}.ok{background:#edf7ea;border-color:#bfdba9}.err{background:#fff0ee;border-color:#e5bbb5}
+.recipe-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.recipe{overflow:hidden;padding:0}.recipe img{display:block;width:100%;height:170px;object-fit:cover;background:#edf1ed}.recipe-body{padding:14px}.tag{display:inline-block;background:#edf5e8;border-radius:999px;padding:5px 8px;margin:2px;font-size:12px}.fav{float:right;background:#fff;color:#a44b45;padding:5px 9px}
+.day{display:grid;grid-template-columns:100px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:10px 0}.day:last-child{border-bottom:0}.day img{width:100px;height:70px;object-fit:cover;border-radius:12px}
+.offer{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:15px;margin:9px 0}.best{border:2px solid #bfdba9;background:#f7fbf4}.price{font-size:20px;font-weight:900}.save{color:#2f6a3d;font-weight:900}
+.shop-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.shop-item.done{text-decoration:line-through;opacity:.55}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);z-index:30;padding:6px 3px calc(6px + env(safe-area-inset-bottom))}nav button{background:none;color:#68736c;padding:6px 2px;font-size:12px}nav button.active{color:var(--g);font-weight:900}nav span{display:block;font-size:22px}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:50}.modal.open{display:flex}.sheet{background:#fff;width:100%;max-height:88vh;overflow:auto;border-radius:25px 25px 0 0;padding:20px}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.recipe-grid{grid-template-columns:repeat(2,1fr)}.quick{grid-template-columns:repeat(2,1fr)}}@media(max-width:480px){.grid,.recipe-grid{grid-template-columns:1fr}.day{grid-template-columns:78px 1fr}.day img{width:78px;height:62px}.day button{grid-column:2}.quick{grid-template-columns:repeat(2,1fr)}}
+
+.autocomplete-wrap{position:relative}
+.suggestions{position:absolute;z-index:50;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #d5ddd5;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12);overflow:hidden}
+.suggestion{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;border:0;background:#fff;text-align:left;padding:13px 15px;cursor:pointer;font:inherit}
+.suggestion:hover,.suggestion:focus{background:#f1f7ef}
+.suggestion small{color:#6f786f}
+.search-help{margin:10px 0 16px;padding:12px 14px;background:#f4f8f1;border-radius:14px;color:#667066;display:flex;flex-direction:column;gap:7px}
+.quick-products{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid #d7e2d4;background:#fff;border-radius:999px;padding:7px 10px;cursor:pointer}
+.price-preview{margin-top:10px;padding:11px 13px;border-radius:12px;background:#eef7eb}
+</style></head>
+<body>
+<header><h1>FamilienEssensPlaner</h1><p>Planen · Kochen · Sparen · Einkaufen 🌱</p></header>
+<main>
+
+<section id="home" class="view active">
+<div class="card hero"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">DEIN FAMILIEN-DASHBOARD</div><h2>Eine entspannte Woche beginnt hier.</h2><p class="muted">Plane Gerichte, behalte dein Budget im Blick und erstelle deine Einkaufsliste automatisch.</p></div><div style="font-size:58px">🍲</div></div></div>
+<div class="stats"><div class="stat">👨‍👩‍👧<small>Familie</small><b id="sPeople">3</b></div><div class="stat">💶<small>Budget</small><b id="sBudget">150 €</b></div><div class="stat">🛒<small>Artikel</small><b id="sItems">0</b></div><div class="stat">💚<small>Ersparnis</small><b id="sSave">0 €</b></div></div>
+<div class="card"><h3>⚙️ Familienprofil</h3><div class="grid"><div><label>Personen</label><input id="quickPeople" type="number" min="1" value="3"></div><div><label>Wochenbudget (€)</label><input id="quickBudget" type="number" min="0" value="150"></div><div><label>PLZ / Ort</label><input id="quickZip" placeholder="z. B. 99817"></div><div><label>Lieblingsmarkt</label><select id="quickMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div></div><div class="actions"><button onclick="saveProfileFromHome()">💾 Speichern</button><button class="secondary" onclick="show('profile')">Profil öffnen</button></div></div>
+<div class="section-title"><h3>🚀 Schnellzugriff</h3></div><div class="quick"><button onclick="show('week')"><span>📅</span><b>Wochenplan</b><small>7 Tage planen</small></button><button onclick="show('recipes')"><span>🍲</span><b>Rezepte</b><small>Gerichte entdecken</small></button><button onclick="show('offers')"><span>🏆</span><b>Angebote</b><small>Preise vergleichen</small></button><button onclick="show('shopping')"><span>🧺</span><b>Einkauf</b><small>Liste abhaken</small></button></div>
+<div class="card"><h3>💶 Rezeptpreise</h3><p class="muted">Die Preise der einzelnen Zutaten dienen aktuell als Startwerte für die Budgetplanung. REWE weist selbst darauf hin, dass konkrete Preise vom Standort abhängen.</p></div><div class="card"><h3>💡 Familien-Tipp</h3><p class="muted">Plane zuerst 3–4 Gerichte mit gemeinsamen Zutaten. So wird die Einkaufsliste kleiner und das Budget besser eingehalten.</p></div>
+</section>
+
+<section id="profile" class="view"><div class="card"><h2>👨‍👩‍👧 Familienprofil</h2><p class="muted">Alles wird auf diesem Gerät gespeichert.</p><div class="grid"><div><label>PLZ / Ort</label><input id="profileZip"></div><div><label>Personen</label><input id="profilePeople" type="number" min="1"></div><div><label>Wochenbudget (€)</label><input id="profileBudget" type="number" min="0"></div><div><label>Lieblingsmarkt</label><select id="profileMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div><div><label>Ernährung</label><select id="diet"><option>Alles</option><option>Vegetarisch</option><option>Vegan</option></select></div><div><label>Kochzeit</label><select id="cooktime"><option>Egal</option><option>max. 20 Minuten</option><option>max. 30 Minuten</option><option>max. 45 Minuten</option></select></div></div><div class="actions"><button onclick="saveProfile()">Profil speichern</button><button class="secondary" onclick="show('offers')">Angebote vergleichen</button></div><div id="profileMsg"></div></div></section>
+
+<section id="recipes" class="view"><div class="card"><h2>🍲 Rezepte</h2><div class="grid"><div><label>Suche</label><input id="recipeSearch" oninput="renderRecipes()" placeholder="z. B. Pasta"></div><div><label>Filter</label><select id="recipeFilter" onchange="renderRecipes()"><option>Alle</option><option>Vegetarisch</option><option>Schnell</option><option>Kinderfreundlich</option></select></div></div></div><div class="card"><h3>🧾 Aktuelle Planpreise für Zutaten</h3><p class="small">Richtpreise pro üblicher Einkaufseinheit – keine Live-Händlerpreise.</p><div class="grid"><div><b>Spaghetti</b><div class="small">1.19 €</div></div><div><b>Tomaten</b><div class="small">1.49 €</div></div><div><b>Hackfleisch</b><div class="small">4.49 €</div></div><div><b>Zwiebel</b><div class="small">0.89 €</div></div><div><b>Hähnchen</b><div class="small">5.49 €</div></div><div><b>Reis</b><div class="small">1.79 €</div></div><div><b>Kokosmilch</b><div class="small">1.49 €</div></div><div><b>Paprika</b><div class="small">1.99 €</div></div><div><b>Kidneybohnen</b><div class="small">0.89 €</div></div><div><b>Mais</b><div class="small">0.99 €</div></div><div><b>Linsen</b><div class="small">1.49 €</div></div><div><b>Curry</b><div class="small">1.29 €</div></div><div><b>Feta</b><div class="small">1.99 €</div></div><div><b>Zucchini</b><div class="small">1.29 €</div></div><div><b>Pesto</b><div class="small">1.49 €</div></div><div><b>Parmesan</b><div class="small">2.49 €</div></div><div><b>Tofu</b><div class="small">2.29 €</div></div><div><b>Wraps</b><div class="small">1.49 €</div></div><div><b>Salat</b><div class="small">1.29 €</div></div><div><b>Haferflocken</b><div class="small">1.19 €</div></div><div><b>Banane</b><div class="small">1.49 €</div></div><div><b>Milch</b><div class="small">1.19 €</div></div><div><b>Eier</b><div class="small">2.49 €</div></div><div><b>Kartoffeln</b><div class="small">2.49 €</div></div><div><b>Karotten</b><div class="small">1.29 €</div></div><div><b>Sahne</b><div class="small">1.09 €</div></div><div><b>Burgerbrötchen</b><div class="small">1.49 €</div></div><div><b>Patty</b><div class="small">3.49 €</div></div><div><b>Käse</b><div class="small">2.49 €</div></div><div><b>Gemüse</b><div class="small">2.49 €</div></div><div><b>Chiasamen</b><div class="small">3.49 €</div></div><div><b>Beeren</b><div class="small">2.49 €</div></div></div></div><div id="recipeGrid" class="recipe-grid"></div></section>
+
+<section id="week" class="view">
+<div class="card hero"><h2>📅 Wochenplan</h2>
+<p class="muted">Du entscheidest selbst, wie dein Wochenplan entsteht: automatisch, komplett selbst oder als Mischung.</p>
+<div class="actions">
+<button onclick="generateWeek()">✨ Automatisch planen</button>
+<button class="secondary" onclick="startManualWeek()">✋ Selbst auswählen</button>
+<button class="secondary" onclick="startMixedWeek()">🔀 Gemischt planen</button>
+<button class="danger" onclick="clearWeek()">Leeren</button>
+</div>
+</div>
+<div class="card" id="weekModeCard" style="display:none"></div>
+<div class="card" id="weekList"></div>
+</section>
+
+<section id="offers" class="view"><div class="card hero"><h2>🏆 Smart-Angebotsvergleich</h2><p class="muted">Die gespeicherte PLZ wird automatisch verwendet. Produkte, Einkaufsliste oder <b>alle Zutaten aus dem Wochenplan</b> können verglichen werden.</p><div class="grid"><div><label>PLZ / Ort</label><input id="offerZip"></div><div><label>Produkt</label><input id="offerProduct" placeholder="Milch, Eier, Tomaten …"></div></div><div class="actions"><button onclick="compareProduct()">🏆 Vergleich starten</button><button class="secondary" onclick="useProfileZip()">📍 Profil-PLZ verwenden</button><button class="secondary" onclick="compareList()">🛒 Einkaufsliste vergleichen</button><button class="secondary" onclick="show('sources')">🔌 Datenquellen</button></div><div id="offerMsg"></div></div><div id="offerResults"></div></section>
+
+
+<section id="sources" class="view">
+<div class="card"><h2>🔌 Angebotsquellen</h2><p class="muted">V28 trennt echte Quellen von Demo-/Beispieldaten. Die App kann offizielle Angebotsseiten verlinken und später einen zugelassenen Datenfeed verwenden.</p>
+<div class="offer"><div><b>REWE</b><div class="small">Standortabhängige Preise im REWE-Shop</div></div><a target="_blank" href="https://www.rewe.de/shop/c/milch/">Quelle öffnen</a></div>
+<div class="offer"><div><b>ALDI SÜD</b><div class="small">Angebote + Verfügbarkeitsabfrage je unterstützter Filiale</div></div><a target="_blank" href="https://www.aldi-sued.de/angebote">Quelle öffnen</a></div>
+<div class="offer"><div><b>Lidl</b><div class="small">Aktionsprospekte und regionale Filialangebote</div></div><a target="_blank" href="https://www.lidl.de/c/online-prospekte/s10005610/">Quelle öffnen</a></div>
+<div class="offer"><div><b>Kaufland</b><div class="small">Filial-/Prospektangebote</div></div><a target="_blank" href="https://filiale.kaufland.de/angebote.html">Quelle öffnen</a></div>
+<div class="offer"><div><b>Denns BioMarkt</b><div class="small">Offizielle Händlerquelle; Live-Datenfeed noch anzubinden</div></div><a target="_blank" href="https://www.denns-biomarkt.de/">Quelle öffnen</a></div>
+<div class="offer"><div><b>kaufDA</b><div class="small">Standortbezogene Prospekte/Angebote als mögliche Aggregator-Quelle; Nutzung/Automatisierung muss vor produktivem Einsatz vertraglich/API-seitig geklärt werden.</div></div><a target="_blank" href="https://www.kaufda.de/">Quelle öffnen</a></div>
+</div>
+</section>
+<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shopList"></div></div></section>
+</main>
+
+<nav><button data-v="home" onclick="show('home')"><span>🏠</span>Start</button><button data-v="week" onclick="show('week')"><span>📅</span>Woche</button><button data-v="recipes" onclick="show('recipes')"><span>🍲</span>Rezepte</button><button data-v="offers" onclick="show('offers')"><span>🏆</span>Angebote</button><button data-v="shopping" onclick="show('shopping')"><span>🧺</span>Einkauf</button></nav>
+
+<div id="modal" class="modal" onclick="if(event.target.id==='modal')closeModal()"><div class="sheet"><div id="modalBody"></div><div class="actions"><button class="secondary" onclick="closeModal()">Schließen</button></div></div></div>
+
+<script>
+const INGREDIENT_CATALOG={"Spaghetti": {"aliases": ["spaghetti", "pasta"], "unit": "g", "pack": 500, "price": 1.19}, "Hackfleisch": {"aliases": ["hackfleisch"], "unit": "g", "pack": 500, "price": 4.49}, "Tomaten": {"aliases": ["tomaten"], "unit": "g", "pack": 500, "price": 1.49}, "Zwiebel": {"aliases": ["zwiebel"], "unit": "Stück", "pack": 3, "price": 0.89}, "Olivenöl": {"aliases": ["olivenöl", "öl"], "unit": "ml", "pack": 500, "price": 4.49}, "Salz": {"aliases": ["salz"], "unit": "g", "pack": 500, "price": 0.59}, "Pfeffer": {"aliases": ["pfeffer"], "unit": "g", "pack": 50, "price": 1.99}, "Hähnchen": {"aliases": ["hähnchen"], "unit": "g", "pack": 500, "price": 5.49}, "Reis": {"aliases": ["reis"], "unit": "g", "pack": 1000, "price": 1.79}, "Kokosmilch": {"aliases": ["kokosmilch"], "unit": "ml", "pack": 400, "price": 1.49}, "Paprika": {"aliases": ["paprika"], "unit": "Stück", "pack": 3, "price": 1.99}, "Currypulver": {"aliases": ["curry"], "unit": "g", "pack": 50, "price": 1.29}, "Kidneybohnen": {"aliases": ["kidneybohnen"], "unit": "Dose", "pack": 1, "price": 0.89}, "Mais": {"aliases": ["mais"], "unit": "Dose", "pack": 1, "price": 0.99}, "Chilipulver": {"aliases": ["chili"], "unit": "g", "pack": 50, "price": 1.29}, "Linsen": {"aliases": ["linsen"], "unit": "g", "pack": 500, "price": 1.49}, "Curry": {"aliases": ["curry"], "unit": "g", "pack": 50, "price": 1.29}, "Feta": {"aliases": ["feta"], "unit": "g", "pack": 200, "price": 1.99}, "Zucchini": {"aliases": ["zucchini"], "unit": "Stück", "pack": 2, "price": 1.29}, "Oregano": {"aliases": ["oregano"], "unit": "g", "pack": 10, "price": 0.99}, "Pesto": {"aliases": ["pesto"], "unit": "g", "pack": 190, "price": 1.49}, "Parmesan": {"aliases": ["parmesan"], "unit": "g", "pack": 100, "price": 2.49}, "Tofu": {"aliases": ["tofu"], "unit": "g", "pack": 200, "price": 2.29}, "Wraps": {"aliases": ["wraps"], "unit": "Stück", "pack": 6, "price": 1.49}, "Salat": {"aliases": ["salat"], "unit": "Stück", "pack": 1, "price": 1.29}, "Sojasauce": {"aliases": ["sojasauce"], "unit": "ml", "pack": 150, "price": 1.49}, "Haferflocken": {"aliases": ["haferflocken"], "unit": "g", "pack": 500, "price": 1.19}, "Banane": {"aliases": ["banane"], "unit": "Stück", "pack": 5, "price": 1.49}, "Milch": {"aliases": ["milch"], "unit": "ml", "pack": 1000, "price": 1.19}, "Eier": {"aliases": ["eier"], "unit": "Stück", "pack": 10, "price": 2.49}, "Kartoffeln": {"aliases": ["kartoffeln"], "unit": "g", "pack": 2500, "price": 2.49}, "Karotten": {"aliases": ["karotten"], "unit": "g", "pack": 1000, "price": 1.29}, "Sahne": {"aliases": ["sahne"], "unit": "ml", "pack": 200, "price": 1.09}, "Gemüsebrühe": {"aliases": ["gemüsebrühe"], "unit": "ml", "pack": 500, "price": 1.49}, "Burgerbrötchen": {"aliases": ["burgerbrötchen"], "unit": "Stück", "pack": 4, "price": 1.49}, "Patty": {"aliases": ["patty"], "unit": "Stück", "pack": 2, "price": 3.49}, "Käse": {"aliases": ["käse"], "unit": "g", "pack": 200, "price": 2.49}, "Gemüse": {"aliases": ["gemüse"], "unit": "g", "pack": 1000, "price": 2.49}, "Chiasamen": {"aliases": ["chiasamen"], "unit": "g", "pack": 300, "price": 3.49}, "Beeren": {"aliases": ["beeren"], "unit": "g", "pack": 300, "price": 2.49}};
+const RECIPE_DETAILS={"Spaghetti Bolognese": {"servings": 4, "ingredients": [["Spaghetti", 300, "g"], ["Hackfleisch", 400, "g"], ["Tomaten", 400, "g"], ["Zwiebel", 1, "Stück"], ["Olivenöl", 1, "EL"], ["Salz", 1, "Prise"], ["Pfeffer", 1, "Prise"]], "steps": ["Zwiebel fein würfeln und in Olivenöl glasig braten.", "Hackfleisch dazugeben und kräftig anbraten.", "Tomaten einrühren und die Sauce 15–20 Minuten köcheln lassen.", "Spaghetti nach Packungsangabe al dente kochen.", "Nudeln mit der Sauce servieren und mit Pfeffer abschmecken."]}, "Cremiges Hähnchen-Curry": {"servings": 4, "ingredients": [["Hähnchen", 500, "g"], ["Reis", 300, "g"], ["Kokosmilch", 400, "ml"], ["Paprika", 2, "Stück"], ["Zwiebel", 1, "Stück"], ["Currypulver", 2, "TL"], ["Öl", 1, "EL"], ["Salz", 1, "Prise"]], "steps": ["Reis nach Packungsangabe kochen.", "Hähnchen in mundgerechte Stücke schneiden und in Öl anbraten.", "Zwiebel und Paprika dazugeben und einige Minuten mitbraten.", "Currypulver einrühren und mit Kokosmilch ablöschen.", "10–15 Minuten sanft köcheln lassen und mit Reis servieren."]}, "Chili sin Carne": {"servings": 4, "ingredients": [["Kidneybohnen", 2, "Dosen"], ["Mais", 1, "Dose"], ["Tomaten", 400, "g"], ["Paprika", 2, "Stück"], ["Zwiebel", 1, "Stück"], ["Olivenöl", 1, "EL"], ["Chilipulver", 1, "TL"], ["Salz", 1, "Prise"]], "steps": ["Zwiebel und Paprika würfeln und in Öl anbraten.", "Tomaten, Kidneybohnen und Mais dazugeben.", "Mit Chili und Salz würzen.", "20 Minuten bei niedriger Hitze köcheln lassen.", "Nach Geschmack mit Brot oder Reis servieren."]}, "Linsen-Dal": {"servings": 4, "ingredients": [["Linsen", 250, "g"], ["Kokosmilch", 400, "ml"], ["Tomaten", 400, "g"], ["Zwiebel", 1, "Stück"], ["Curry", 2, "TL"], ["Reis", 250, "g"], ["Öl", 1, "EL"], ["Salz", 1, "Prise"]], "steps": ["Zwiebel würfeln und in Öl anbraten.", "Curry kurz mitrösten.", "Linsen, Tomaten und Kokosmilch dazugeben.", "20–25 Minuten köcheln lassen, bis die Linsen weich sind.", "Reis kochen und das Dal zusammen servieren."]}, "Feta-Gemüse-Auflauf": {"servings": 4, "ingredients": [["Feta", 200, "g"], ["Zucchini", 2, "Stück"], ["Tomaten", 400, "g"], ["Paprika", 2, "Stück"], ["Zwiebel", 1, "Stück"], ["Olivenöl", 1, "EL"], ["Oregano", 1, "TL"], ["Salz", 1, "Prise"]], "steps": ["Backofen auf 200 °C Ober-/Unterhitze vorheizen.", "Gemüse schneiden und in eine Auflaufform geben.", "Mit Öl, Oregano und Salz würzen.", "Feta darüberbröseln.", "25–30 Minuten backen, bis das Gemüse weich und der Feta goldbraun ist."]}, "Pesto-Pasta": {"servings": 4, "ingredients": [["Pasta", 350, "g"], ["Pesto", 150, "g"], ["Tomaten", 250, "g"], ["Parmesan", 50, "g"], ["Salz", 1, "Prise"]], "steps": ["Pasta in Salzwasser al dente kochen.", "Etwas Nudelwasser auffangen und die Pasta abgießen.", "Pesto mit etwas Nudelwasser cremig rühren.", "Tomaten würfeln und unterheben.", "Pasta mit Pesto mischen und Parmesan darübergeben."]}, "Tofu-Wraps": {"servings": 4, "ingredients": [["Tofu", 400, "g"], ["Wraps", 4, "Stück"], ["Salat", 1, "Kopf"], ["Tomaten", 250, "g"], ["Paprika", 1, "Stück"], ["Öl", 1, "EL"], ["Sojasauce", 2, "EL"]], "steps": ["Tofu würfeln und in Öl knusprig anbraten.", "Mit Sojasauce würzen.", "Salat, Tomaten und Paprika schneiden.", "Wraps kurz erwärmen.", "Tofu und Gemüse auf die Wraps geben, einrollen und servieren."]}, "Hafer-Pancakes": {"servings": 4, "ingredients": [["Haferflocken", 200, "g"], ["Banane", 2, "Stück"], ["Milch", 250, "ml"], ["Eier", 2, "Stück"], ["Öl", 1, "TL"]], "steps": ["Haferflocken fein mixen oder als Mehl verwenden.", "Bananen zerdrücken und mit Milch und Eiern verrühren.", "Haferflocken unterrühren und 5 Minuten quellen lassen.", "Etwas Öl in einer Pfanne erhitzen.", "Kleine Pancakes von beiden Seiten goldbraun backen."]}, "Cremige Gemüsesuppe": {"servings": 4, "ingredients": [["Kartoffeln", 500, "g"], ["Karotten", 300, "g"], ["Zwiebel", 1, "Stück"], ["Sahne", 150, "ml"], ["Gemüsebrühe", 750, "ml"], ["Öl", 1, "EL"], ["Salz", 1, "Prise"]], "steps": ["Kartoffeln, Karotten und Zwiebel schälen und würfeln.", "Zwiebel in Öl glasig braten.", "Gemüse und Brühe dazugeben.", "20 Minuten köcheln lassen, bis das Gemüse weich ist.", "Suppe pürieren, Sahne einrühren und abschmecken."]}, "Burger-Abend": {"servings": 4, "ingredients": [["Burgerbrötchen", 4, "Stück"], ["Patty", 4, "Stück"], ["Salat", 1, "Kopf"], ["Tomaten", 2, "Stück"], ["Zwiebel", 1, "Stück"], ["Käse", 4, "Scheiben"], ["Öl", 1, "TL"]], "steps": ["Salat, Tomaten und Zwiebel vorbereiten.", "Pattys in einer heißen Pfanne oder auf dem Grill durchgaren.", "Käse auf die heißen Pattys legen und kurz schmelzen lassen.", "Brötchen aufschneiden und kurz anrösten.", "Burger mit Salat, Gemüse, Patty und Käse zusammensetzen."]}, "Gemüse-Casserole": {"servings": 4, "ingredients": [["Kartoffeln", 600, "g"], ["Gemüse", 500, "g"], ["Käse", 150, "g"], ["Sahne", 200, "ml"], ["Zwiebel", 1, "Stück"], ["Salz", 1, "Prise"], ["Pfeffer", 1, "Prise"]], "steps": ["Backofen auf 190 °C Ober-/Unterhitze vorheizen.", "Kartoffeln dünn schneiden und Gemüse vorbereiten.", "Alles mit Zwiebel in eine Auflaufform geben.", "Sahne darübergeben und würzen.", "Käse darauf verteilen und 35–40 Minuten backen."]}, "Chia-Frühstück": {"servings": 4, "ingredients": [["Chiasamen", 60, "g"], ["Milch", 400, "ml"], ["Beeren", 200, "g"], ["Banane", 2, "Stück"], ["Haferflocken", 80, "g"]], "steps": ["Chiasamen mit Milch verrühren.", "Mindestens 30 Minuten, besser über Nacht, quellen lassen.", "Haferflocken unterheben.", "Banane schneiden und mit Beeren darauf verteilen.", "Kalt servieren."]}};
+const INGREDIENT_PRICES={"Spaghetti": 1.19, "Tomaten": 1.49, "Hackfleisch": 4.49, "Zwiebel": 0.89, "Hähnchen": 5.49, "Reis": 1.79, "Kokosmilch": 1.49, "Paprika": 1.99, "Kidneybohnen": 0.89, "Mais": 0.99, "Linsen": 1.49, "Curry": 1.29, "Feta": 1.99, "Zucchini": 1.29, "Pesto": 1.49, "Parmesan": 2.49, "Tofu": 2.29, "Wraps": 1.49, "Salat": 1.29, "Haferflocken": 1.19, "Banane": 1.49, "Milch": 1.19, "Eier": 2.49, "Kartoffeln": 2.49, "Karotten": 1.29, "Sahne": 1.09, "Burgerbrötchen": 1.49, "Patty": 3.49, "Käse": 2.49, "Gemüse": 2.49, "Chiasamen": 3.49, "Beeren": 2.49};
+const RECIPES=[
+{id:1,name:"Spaghetti Bolognese",img:"images/spaghetti.jpg",time:30,cost:6.8,veg:false,kid:true,ing:["Spaghetti","Tomaten","Hackfleisch","Zwiebel"]},
+{id:2,name:"Cremiges Hähnchen-Curry",img:"images/chicken.jpg",time:35,cost:8.4,veg:false,kid:true,ing:["Hähnchen","Reis","Kokosmilch","Paprika"]},
+{id:3,name:"Chili sin Carne",img:"images/chili.jpg",time:30,cost:5.2,veg:true,kid:true,ing:["Kidneybohnen","Tomaten","Mais","Paprika"]},
+{id:4,name:"Linsen-Dal",img:"images/dal.jpg",time:25,cost:4.6,veg:true,kid:false,ing:["Linsen","Kokosmilch","Tomaten","Curry"]},
+{id:5,name:"Feta-Gemüse-Auflauf",img:"images/feta.jpg",time:40,cost:6.9,veg:true,kid:true,ing:["Feta","Zucchini","Tomaten","Paprika"]},
+{id:6,name:"Pesto-Pasta",img:"images/pesto.jpg",time:20,cost:5.1,veg:true,kid:true,ing:["Pasta","Pesto","Tomaten","Parmesan"]},
+{id:7,name:"Tofu-Wraps",img:"images/tofu.jpg",time:25,cost:6.3,veg:true,kid:true,ing:["Tofu","Wraps","Salat","Tomaten"]},
+{id:8,name:"Hafer-Pancakes",img:"images/oat.jpg",time:20,cost:3.9,veg:true,kid:true,ing:["Haferflocken","Banane","Milch","Eier"]},
+{id:9,name:"Cremige Gemüsesuppe",img:"images/soup.jpg",time:30,cost:4.3,veg:true,kid:true,ing:["Kartoffeln","Karotten","Sahne","Zwiebel"]},
+{id:10,name:"Burger-Abend",img:"images/burger.jpg",time:30,cost:8.5,veg:false,kid:true,ing:["Burgerbrötchen","Patty","Salat","Tomaten"]},
+{id:11,name:"Gemüse-Casserole",img:"images/casserole.jpg",time:45,cost:7.2,veg:true,kid:true,ing:["Kartoffeln","Gemüse","Käse","Sahne"]},
+{id:12,name:"Chia-Frühstück",img:"images/chia.jpg",time:10,cost:3.2,veg:true,kid:true,ing:["Chiasamen","Milch","Beeren","Banane"]}
+];
+const DAYS=["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+const OFFERS={Milch:[["REWE",1.19],["Lidl",1.15],["ALDI SÜD",1.09],["Kaufland",1.12],["Denns BioMarkt",1.49],["EDEKA",1.19]],Eier:[["REWE",2.49],["Lidl",2.39],["ALDI SÜD",2.29],["Kaufland",2.35],["Denns BioMarkt",3.19],["EDEKA",2.49]],Tomaten:[["REWE",1.79],["Lidl",1.49],["ALDI SÜD",1.59],["Kaufland",1.39],["Denns BioMarkt",1.99],["EDEKA",1.69]],Pasta:[["REWE",1.49],["Lidl",1.19],["ALDI SÜD",1.45],["Kaufland",1.39],["Denns BioMarkt",1.79],["EDEKA",1.49]]};
+
+const LIVE_SOURCES={
+ REWE:{type:"official",url:"https://www.rewe.de/shop/c/milch/",status:"location-dependent"},
+ "ALDI SÜD":{type:"official",url:"https://www.aldi-sued.de/angebote",status:"offers + supported-store availability"},
+ Lidl:{type:"official",url:"https://www.lidl.de/c/online-prospekte/s10005610/",status:"prospects / regional"},
+ Kaufland:{type:"official",url:"https://filiale.kaufland.de/angebote.html",status:"branch offers"},
+ "Denns BioMarkt":{type:"official",url:"https://www.denns-biomarkt.de/",status:"source pending structured feed"},
+ kaufDA:{type:"aggregator",url:"https://www.kaufda.de/",status:"source/automation rights to verify"}
+};
+const STORE_KEY="FEP_V27";
+function getState(){return JSON.parse(localStorage.getItem(STORE_KEY)||'{"profile":{"zip":"","people":3,"budget":150,"market":"Denns BioMarkt","diet":"Alles","cooktime":"Egal"},"shopping":[],"week":[]}')}
+function put(s){localStorage.setItem(STORE_KEY,JSON.stringify(s));updateHome()}
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===id));window.scrollTo({top:0,behavior:"smooth"});if(id==="recipes")renderRecipes();if(id==="shopping")renderShopping();if(id==="week")renderWeek();if(id==="offers")loadOfferZip()}
+function loadProfileFields(){const p=getState().profile;profileZip.value=p.zip;profilePeople.value=p.people;profileBudget.value=p.budget;profileMarket.value=p.market;diet.value=p.diet;cooktime.value=p.cooktime;quickZip.value=p.zip;quickPeople.value=p.people;quickBudget.value=p.budget;quickMarket.value=p.market}
+function saveProfile(){const s=getState();s.profile={zip:profileZip.value.trim(),people:+profilePeople.value||1,budget:+profileBudget.value||0,market:profileMarket.value,diet:diet.value,cooktime:cooktime.value};put(s);profileMsg.innerHTML='<div class="notice ok">✅ Profil gespeichert. Die PLZ wird automatisch im Angebotsvergleich verwendet.</div>'}
+function saveProfileFromHome(){const s=getState();s.profile={...s.profile,zip:quickZip.value.trim(),people:+quickPeople.value||1,budget:+quickBudget.value||0,market:quickMarket.value};put(s);alert("Profil gespeichert.")}
+function updateHome(){const s=getState(),p=s.profile;document.getElementById("sPeople").textContent=p.people+" Personen";document.getElementById("sBudget").textContent=p.budget.toFixed(0)+" €";document.getElementById("sItems").textContent=s.shopping.length;document.getElementById("sSave").textContent="0 €";quickZip.value=p.zip;quickPeople.value=p.people;quickBudget.value=p.budget;quickMarket.value=p.market}
+function useProfileZip(){const z=getState().profile.zip;if(!z){alert("Bitte zuerst im Familienprofil eine PLZ oder einen Ort speichern.");show("profile");return}offerZip.value=z;compareProduct()}
+function renderRecipes(){const q=(recipeSearch.value||"").toLowerCase(),f=recipeFilter.value;let a=RECIPES.filter(r=>r.name.toLowerCase().includes(q));if(f==="Vegetarisch")a=a.filter(r=>r.veg);if(f==="Schnell")a=a.filter(r=>r.time<=20);if(f==="Kinderfreundlich")a=a.filter(r=>r.kid);const s=getState();recipeGrid.innerHTML=a.map(r=>'<article class="card recipe"><img src="'+r.img+'" alt="'+esc(r.name)+'" onerror="this.style.display=\'none\'"><div class="recipe-body"><button class="fav" onclick="toggleFav('+r.id+')">'+(s.fav?.includes(r.id)?"♥":"♡")+'</button><h3>'+esc(r.name)+'</h3><span class="tag">⏱ '+r.time+' Min.</span><span class="tag">💶 Zutaten ca. '+ingredientCost(r).toFixed(2).replace(".",",")+' €</span>'+(r.veg?'<span class="tag">🌱 Veggie</span>':'')+'<p class="small">'+r.ing.join(" · ")+'</p><div class="actions"><button onclick="openRecipe('+r.id+')">👨‍🍳 Rezept</button><button class="secondary" onclick="openRecipe('+r.id+')">Details</button></div></div></article>').join("")}
+function toggleFav(id){const s=getState();s.fav=s.fav||[];s.fav=s.fav.includes(id)?s.fav.filter(x=>x!==id):[...s.fav,id];put(s);renderRecipes()}
+function scaledIngredients(r, people){
+ const d=RECIPE_DETAILS[r.name]; if(!d) return [];
+ const factor=people/d.servings;
+ return d.ingredients.map(([name,qty,unit])=>({name,qty:Math.round(qty*factor*100)/100,unit}));
+}
+function formatQty(q){return Number.isInteger(q)?String(q):q.toLocaleString("de-DE",{maximumFractionDigits:2});}
+function openRecipe(id){
+ const r=RECIPES.find(x=>x.id===id), p=getState().profile.people||3, d=RECIPE_DETAILS[r.name];
+ const ing=scaledIngredients(r,p);
+ modalBody.innerHTML='<h2>'+esc(r.name)+'</h2>'+
+ '<img src="'+r.img+'" style="width:100%;max-height:300px;object-fit:cover;border-radius:16px">'+
+ '<div class="notice ok">👨‍👩‍👧 Mengen für <b>'+p+' Personen</b> · ⏱ '+r.time+' Minuten</div>'+
+ '<h3>🧾 Zutaten</h3><ul>'+ing.map(x=>'<li><b>'+formatQty(x.qty)+' '+esc(x.unit)+'</b> '+esc(x.name)+'</li>').join("")+'</ul>'+
+ '<h3>👨‍🍳 Zubereitung</h3><ol>'+d.steps.map(x=>'<li style="margin:9px 0">'+esc(x)+'</li>').join("")+'</ol>'+
+ '<div class="actions"><button onclick="addRecipe('+r.id+');closeModal()">➕ Zutaten zur Einkaufsliste</button></div>';
+ modal.classList.add("open");
+}
+function closeModal(){modal.classList.remove("open")}
+function ingredientCost(r){return r.ing.reduce((sum,x)=>sum+(INGREDIENT_PRICES[x]||0),0)}
+function addRecipe(id){const r=RECIPES.find(x=>x.id===id),s=getState();r.ing.forEach(x=>{const y=s.shopping.find(i=>i.name===x);if(y)y.qty++;else s.shopping.push({name:x,qty:1,done:false})});put(s);alert("Zutaten wurden hinzugefügt.")}
+function generateWeek(){
+ const s=getState();
+ const pool=RECIPES.filter(r=>{
+   const d=s.profile.diet||"Alles";
+   if(d==="Vegetarisch"&&!r.veg)return false;
+   if(d==="Vegan"&&!r.veg)return false;
+   return true;
+ });
+ s.week=DAYS.map((day,i)=>({day,recipeId:pool[i%pool.length].id}));
+ s.weekMode="auto"; put(s); renderWeek();
+}
+function startManualWeek(){
+ const s=getState(); s.weekMode="manual";
+ s.week=DAYS.map((day,i)=>({day,recipeId:(s.week?.[i]?.recipeId)||null}));
+ put(s); renderWeek(); renderManualPicker();
+}
+function startMixedWeek(){
+ const s=getState(); s.weekMode="mixed";
+ s.week=DAYS.map((day,i)=>({day,recipeId:s.week?.[i]?.recipeId||null}));
+ put(s); renderWeek(); renderManualPicker();
+}
+function setWeekRecipe(dayIndex,recipeId){
+ const s=getState(); s.week=s.week||DAYS.map(d=>({day:d,recipeId:null}));
+ s.week[dayIndex].recipeId=+recipeId||null; put(s); renderWeek(); renderManualPicker();
+}
+function renderManualPicker(){
+ const s=getState(), mode=s.weekMode;
+ if(mode!=="manual"&&mode!=="mixed"){weekModeCard.style.display="none";return}
+ weekModeCard.style.display="block";
+ weekModeCard.innerHTML='<h3>'+(mode==="mixed"?"🔀 Gemischte Planung":"✋ Eigene Wochenplanung")+'</h3>'+
+ '<p class="muted">'+(mode==="mixed"?"Bereits gewählte Gerichte bleiben erhalten. Leere Tage kannst du selbst füllen.":"Wähle für jeden Tag dein gewünschtes Rezept aus.")+'</p>'+
+ s.week.map((d,i)=>'<div style="display:grid;grid-template-columns:100px 1fr;gap:10px;align-items:center;margin:9px 0"><b>'+d.day+'</b><select onchange="setWeekRecipe('+i+',this.value)"><option value="">— Rezept auswählen —</option>'+RECIPES.map(r=>'<option value="'+r.id+'" '+(d.recipeId===r.id?"selected":"")+'>'+esc(r.name)+'</option>').join("")+'</select></div>').join("");
+}
+function clearWeek(){const s=getState();s.week=[];put(s);renderWeek()}
+function renderWeek(){
+ const s=getState();
+ if(!s.week||!s.week.length){weekList.innerHTML='<p class="muted">Noch kein Wochenplan. Wähle oben automatisch, selbst oder gemischt.</p>';return}
+ const total=s.week.reduce((a,d)=>{const r=RECIPES.find(x=>x.id===d.recipeId);return a+(r?ingredientCost(r):0)},0);
+ weekList.innerHTML=s.week.map((d,i)=>{
+   const r=RECIPES.find(x=>x.id===d.recipeId);
+   if(!r)return '<div class="day"><div><b>'+d.day+'</b></div><div><span class="muted">Noch kein Rezept ausgewählt.</span></div><button class="secondary" onclick="startManualWeek()">Auswählen</button></div>';
+   return '<div class="day"><img src="'+r.img+'"><div><b>'+d.day+'</b><div>'+r.name+'</div><span class="small">'+r.time+' Min. · Zutaten ca. '+ingredientCost(r).toFixed(2).replace(".",",")+' €</span></div><button onclick="openRecipe('+r.id+')">Rezept</button></div>'
+ }).join("")+(s.week.some(d=>!d.recipeId)?'<div class="notice">ℹ️ Einige Tage sind noch offen. Du kannst sie selbst auswählen oder mit „Automatisch planen“ füllen.</div>':'<div class="notice ok">💶 Geschätzte Zutatenkosten: <b>'+total.toFixed(2).replace(".",",")+' €</b></div>');
+ renderManualPicker();
+}
+function addWeekToShop(){const s=getState();if(!s.week.length){generateWeek()}s=getState();s.week.forEach(d=>{const r=RECIPES.find(x=>x.id===d.recipeId);r.ing.forEach(x=>{const y=s.shopping.find(i=>i.name===x);if(y)y.qty++;else s.shopping.push({name:x,qty:1,done:false})})});put(s);show("shopping")}
+function addShop(){const v=newShop.value.trim();if(!v)return;const s=getState();s.shopping.push({name:v,qty:1,done:false});put(s);newShop.value="";renderShopping()}
+function toggleShop(i){const s=getState();s.shopping[i].done=!s.shopping[i].done;put(s);renderShopping()}
+function delShop(i){const s=getState();s.shopping.splice(i,1);put(s);renderShopping()}
+function clearShop(){if(confirm("Einkaufsliste wirklich leeren?")){const s=getState();s.shopping=[];put(s);renderShopping()}}
+function renderShopping(){const s=getState();shopList.innerHTML=s.shopping.length?s.shopping.map((x,i)=>'<div class="shop-item '+(x.done?"done":"")+'"><input type="checkbox" '+(x.done?"checked":"")+' onchange="toggleShop('+i+')"><div><b>'+esc(x.name)+'</b><div class="small">Menge: '+x.qty+'</div></div><button class="danger" onclick="delShop('+i+')">×</button></div>').join(""):'<p class="muted">Deine Einkaufsliste ist leer.</p>'}
+function loadOfferZip(){offerZip.value=getState().profile.zip||""}
+function findOfferKey(q){q=q.toLowerCase();return Object.keys(OFFERS).find(k=>q.includes(k.toLowerCase())||k.toLowerCase().includes(q))||"Milch"}
+async function compareProduct(){const z=offerZip.value.trim(),q=offerProduct.value.trim()||"Milch";
+try{const live=await compareLiveProducts([q]);if(live){renderLiveCompare(live);return}}catch(e){offerMsg.innerHTML='<div class="notice">⚠️ Live-Backend nicht erreichbar – lokaler Vergleich bleibt verfügbar.</div>';}if(!z){offerMsg.innerHTML='<div class="notice err">⚠️ Bitte zuerst eine PLZ oder einen Ort eingeben.</div>';return}const key=findOfferKey(q),rows=OFFERS[key].slice().sort((a,b)=>a[1]-b[1]),best=rows[0],worst=rows[rows.length-1];offerMsg.innerHTML='<div class="notice ok">✅ Vergleich für '+esc(z)+' gestartet.</div>';offerResults.innerHTML='<div class="card"><h2>🏆 '+key+'</h2><p class="small">📍 '+esc(z)+' · Vergleichsdaten</p>'+rows.map((r,i)=>'<div class="offer '+(i===0?"best":"")+'"><div><b>'+(i===0?"🥇 ":"")+r[0]+'</b><div class="market">'+(i===0?"Günstigster Treffer":"Preisvergleich")+'</div></div><div class="price">'+r[1].toFixed(2).replace(".",",")+' €</div></div>').join("")+'<div class="notice ok">🔎 Quellenstatus: Preise müssen vor der Anzeige gegen eine zugelassene Händler-/Aggregatorquelle verifiziert werden.<br>💚 Unterschied zwischen günstigstem und teuerstem Treffer: <span class="save">'+(worst[1]-best[1]).toFixed(2).replace(".",",")+' €</span></div><p class="small">🟢 Datenstatus: Diese Version ist für echte Angebotsquellen vorbereitet. Händlerseiten werden nicht als frei zugängliche APIs vorgetäuscht; nicht bestätigte Preise werden als solche gekennzeichnet.</p></div>'}
+function allRecipeIngredients(){
+ const s=getState(), map=new Map();
+ const selected=(s.week||[]).filter(d=>d.recipeId).map(d=>RECIPES.find(r=>r.id===d.recipeId)).filter(Boolean);
+ selected.forEach(r=>{
+   scaledIngredients(r,s.profile.people||3).forEach(x=>{
+     const key=x.name;
+     const c=INGREDIENT_CATALOG[key]||{};
+     const prev=map.get(key)||{name:key,qty:0,unit:x.unit,pack:c.pack||null,baseline:c.price||null};
+     prev.qty+=x.qty; map.set(key,prev);
+   });
+ });
+ return [...map.values()];
+}
+function ingredientCompareRows(items){
+ return items.map(i=>{
+   const key=findOfferKey(i.name);
+   const offers=(OFFERS[key]||[]).slice().sort((a,b)=>a[1]-b[1]);
+   const best=offers[0], base=INGREDIENT_CATALOG[i.name]?.price||0;
+   const packs=i.pack?Math.ceil(i.qty/i.pack):1;
+   const estimated=best?best[1]*packs:base*packs;
+   return {...i,matchedProduct:key,best,offers,packages:packs,estimated};
+ });
+}
+async 
+function normalizeProductText(v){return (v||"").toLocaleLowerCase("de-DE").trim();}
+function productCatalogNames(){
+  if(typeof INGREDIENT_CATALOG==="undefined") return [];
+  return Object.keys(INGREDIENT_CATALOG);
+}
+function productMatches(q){
+  const n=normalizeProductText(q);
+  const names=productCatalogNames();
+  if(!n) return names.slice(0,10);
+  return names.filter(name=>{
+    const c=INGREDIENT_CATALOG[name]||{};
+    return normalizeProductText(name).includes(n) || (c.aliases||[]).some(a=>normalizeProductText(a).includes(n));
+  }).slice(0,10);
+}
+function chooseProduct(name){
+  const input=document.getElementById("offerProduct");
+  if(input){input.value=name; updateProductSuggestions(false); showProductPricePreview(name);}
+}
+function updateProductSuggestions(showEmpty=false){
+  const input=document.getElementById("offerProduct"), box=document.getElementById("productSuggestions");
+  if(!input||!box)return;
+  const q=input.value||"", matches=productMatches(q);
+  if(!q && !showEmpty){box.style.display="none";return;}
+  box.innerHTML=matches.length?matches.map(name=>{
+    const c=INGREDIENT_CATALOG[name]||{};
+    return '<button type="button" class="suggestion" onclick="chooseProduct('+JSON.stringify(name)+')"><span>🛒 <b>'+esc(name)+'</b></span><small>'+(c.pack?('Packung '+formatQty(c.pack)+' '+esc(c.unit||'')):'Rezeptzutat')+'</small></button>';
+  }).join(""):'<div class="suggestion"><span>Keine passende Rezeptzutat gefunden</span></div>';
+  box.style.display="block";
+}
+function showProductPricePreview(name){
+  const c=INGREDIENT_CATALOG[name], help=document.getElementById("productSearchHelp");
+  if(!c||!help)return;
+  let preview=help.querySelector(".price-preview");
+  if(!preview){preview=document.createElement("div");preview.className="price-preview";help.appendChild(preview);}
+  preview.innerHTML='💶 <b>Planpreis vor dem Vergleich:</b> '+Number(c.price||0).toFixed(2).replace(".",",")+' € · Packung '+formatQty(c.pack||1)+' '+esc(c.unit||"");
+}
+document.addEventListener("click",function(e){
+  const wrap=document.querySelector(".autocomplete-wrap");
+  const box=document.getElementById("productSuggestions");
+  if(wrap&&box&&!wrap.contains(e.target))box.style.display="none";
+});
+function compareList(){
+ const s=getState(), items=allRecipeIngredients();
+ if(!items.length){alert("Bitte zuerst mindestens einen Tag im Wochenplan mit einem Rezept belegen.");show("week");return}
+ show("offers");
+ setTimeout(async()=>{
+   const rows=ingredientCompareRows(items);
+   const total=rows.reduce((a,r)=>a+r.estimated,0);
+   offerMsg.innerHTML='<div class="notice ok">🛒 Alle Zutaten der ausgewählten Rezepte wurden in den Preisvergleich übernommen: <b>'+rows.length+' Zutaten</b>.</div>';
+   offerResults.innerHTML='<div class="card"><h2>🏆 Kompletter Rezept-Zutatenvergleich</h2><p class="small">Für '+(s.profile.people||3)+' Personen · Mengen aus dem Wochenplan · Packungen werden aufgerundet.</p>'+
+   rows.map(r=>'<div class="offer '+(r.best?"best":"")+'"><div><b>'+esc(r.name)+'</b><div class="small">Benötigt: '+formatQty(r.qty)+' '+esc(r.unit)+' · ca. '+r.packages+' Packung(en) · Vergleich: '+esc(r.matchedProduct)+'</div><div class="small">'+(r.best?"🥇 "+esc(r.best[0]):"Kein Treffer")+'</div></div><div class="price">'+(r.best?r.estimated.toFixed(2):"–").replace(".",",")+' €</div></div>').join("")+
+   '<div class="notice ok">💶 Geschätzte günstigste Gesamtsumme für alle Rezeptzutaten: <b>'+total.toFixed(2).replace(".",",")+' €</b></div>'+
+   '<div class="notice">🟡 Noch nicht live: Die Händlerdaten werden ersetzt, sobald ein zugelassener Live-Datenfeed angeschlossen ist. Bis dahin bleiben die Ergebnisse Plan-/Demo-Daten.</div></div>';
+ },20);
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+loadProfileFields();updateHome();renderRecipes();renderWeek();renderShopping();
+</script>
+<script>
+/* V32 Backend integration:
+   Set window.FEP_BACKEND_URL to your deployed backend URL.
+   If unavailable, the app keeps its local comparison fallback. */
+window.FEP_BACKEND_URL = window.FEP_BACKEND_URL || ""; // hier die bereitgestellte Backend-URL einsetzen
+async function compareViaBackend(products){
+  if(!window.FEP_BACKEND_URL) return null;
+  const p=getState().profile;
+  const response=await fetch(window.FEP_BACKEND_URL.replace(/\/$/,"")+"/api/compare",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({zip:p.zip||offerZip.value.trim(),products})
+  });
+  if(!response.ok) throw new Error("Backend "+response.status);
+  return response.json();
+}
+</script>
+</body></html>
