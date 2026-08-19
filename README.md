@@ -123,3 +123,30 @@ Die Live-Angebotsautomatisierung ist als Produktfunktion vorgesehen, aber die en
 - offizieller Denns/BioMarkt-Angebotsbereich wird zuverlässig in einem neuen Tab geöffnet
 - ausgewählter Markt aus dem Familienprofil wird angezeigt
 - klare Erklärung, warum die externe Seite nicht in einem iframe angezeigt wird
+
+
+## V19 – Smart-Angebotsvergleich
+- PLZ/Ort-Eingabe direkt im Angebote-Bereich
+- optionales Produktfeld
+- Vergleich für REWE, Lidl, ALDI SÜD, Kaufland und Denns BioMarkt
+- offizielle Angebotsquellen pro Markt
+- keine erfundenen Live-Preise: markt- und aktionsabhängige Preise werden nur als verifiziert angezeigt
+- PLZ und Produkt für spätere Vergleiche gespeichert
+
+
+## V20 – Live-Angebotsvergleich
+- PLZ/Ort als Startpunkt
+- Produkt-Suche
+- offizielle Angebotsquellen von REWE, Lidl, ALDI SÜD, Kaufland und Denns
+- keine erfundenen Preise
+- Vergleich berücksichtigt Markt, Zeitraum, Packungsgröße und Grundpreis
+- Ergebnis zeigt die verifizierbaren Angebotsquellen und führt direkt zur jeweiligen aktuellen Angebotsseite
+
+
+## V21 – Angebotsvergleich stabilisiert
+- Vergleichsbutton mit echter Event-Verknüpfung statt nur Inline-Handler
+- Buttons sind `type=button` und können kein Formular versehentlich absenden
+- Fehlermeldung bei fehlender PLZ/Ort
+- PLZ und Produkt werden separat gespeichert
+- Ergebnis-Karten sind direkt anklickbar
+- kompatibel mit bereits geöffneten/zwischengespeicherten Versionen

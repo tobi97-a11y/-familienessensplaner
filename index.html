@@ -161,8 +161,8 @@ main{max-width:760px;margin:auto;padding:14px 13px 96px}.view{display:none}.view
       </div>
     </div>
     <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
-      <button class="btn primary" onclick="startSmartCompare()">🏆 Vergleich starten</button>
-      <button class="btn soft" onclick="compareFromProfile()">Profil-PLZ verwenden</button>
+      <button type="button" id="startCompareBtn" class="btn primary">🏆 Vergleich starten</button>
+      <button type="button" id="profileCompareBtn" class="btn soft">Profil-PLZ verwenden</button>
     </div>
     <div id="compareStatus" class="muted" style="margin-top:10px"></div>
     <div id="compareResults" style="margin-top:12px"></div>
@@ -401,63 +401,103 @@ const compareMarkets=[
   {name:"Denns BioMarkt",url:"https://www.biomarkt.de/angebote"}
 ];
 
+
 function compareFromProfile(){
-  const loc=(state.marketLocation||"").trim();
-  const el=document.getElementById("compareLocation");
-  if(el) el.value=loc;
-  startSmartCompare();
+  try{
+    const loc=(state && state.marketLocation ? String(state.marketLocation) : "").trim();
+    const el=document.getElementById("compareLocation");
+    if(el) el.value=loc;
+    if(!loc){
+      const status=document.getElementById("compareStatus");
+      if(status) status.textContent="Bitte zuerst im Familienprofil eine PLZ oder einen Ort speichern.";
+      return;
+    }
+    startSmartCompare();
+  }catch(err){ showCompareError(err); }
 }
 
 function startSmartCompare(){
-  const loc=(document.getElementById("compareLocation")||{}).value?.trim()||"";
-  const product=(document.getElementById("compareProduct")||{}).value?.trim()||"";
+  try{
+    const locEl=document.getElementById("compareLocation");
+    const productEl=document.getElementById("compareProduct");
+    const loc=(locEl ? locEl.value : "").trim();
+    const product=(productEl ? productEl.value : "").trim();
+    const status=document.getElementById("compareStatus");
+    const results=document.getElementById("compareResults");
+
+    if(!loc){
+      if(status) status.textContent="📍 Bitte deine PLZ oder deinen Ort eingeben.";
+      if(locEl) locEl.focus();
+      return false;
+    }
+
+    // Save only the comparison fields; do not depend on the dashboard renderer.
+    try{
+      state.compareLocation=loc;
+      state.compareProduct=product;
+      localStorage.setItem("fep_compare", JSON.stringify({location:loc,product:product}));
+    }catch(_){}
+
+    if(status) status.textContent="✅ Vergleich für "+loc+" gestartet.";
+
+    if(results){
+      results.innerHTML =
+        '<div class="card" style="background:#fff">' +
+          '<h3>🏆 Märkte für '+escapeHtml(loc)+'</h3>' +
+          '<p class="muted">'+
+            (product ? 'Gesucht: <b>'+escapeHtml(product)+'</b><br>' : '')+
+            'Öffne die offiziellen Angebote des jeweiligen Marktes. Die App zeigt keine erfundenen Preise; nur verifizierte Preise werden als günstigster Preis markiert.'+
+          '</p>'+
+          '<div class="offer-grid">'+
+            compareMarkets.map(function(m){
+              return '<div class="offer">'+
+                '<b>'+escapeHtml(m.name)+'</b>'+
+                '<span>Aktuelle Angebote prüfen</span>'+
+                '<button type="button" class="btn primary market-offer-btn" data-market="'+escapeHtml(m.name)+'" style="margin-top:7px">Angebote prüfen</button>'+
+              '</div>';
+            }).join("")+
+          '</div>'+
+        '</div>';
+
+      results.querySelectorAll(".market-offer-btn").forEach(function(btn){
+        btn.addEventListener("click",function(){
+          openMarketOffer(btn.getAttribute("data-market"));
+        });
+      });
+    }
+    return true;
+  }catch(err){
+    showCompareError(err);
+    return false;
+  }
+}
+
+function showCompareError(err){
   const status=document.getElementById("compareStatus");
-  const results=document.getElementById("compareResults");
-  if(!loc){
-    if(status) status.textContent="Bitte zuerst deine PLZ oder deinen Ort eingeben.";
-    return;
-  }
-  state.compareLocation=loc;
-  state.compareProduct=product;
-  save();
-  if(status) status.textContent="📍 "+loc+" gespeichert. Live-Angebote der Märkte werden über die offiziellen Quellen geprüft.";
-  if(results){
-    results.innerHTML=`
-      <div class="card" style="background:#fff">
-        <h3>🏆 Angebotsquellen für ${escapeHtml(loc)}</h3>
-        <p class="muted">${product?"Suche nach: <b>"+escapeHtml(product)+"</b>":"Gib optional ein Produkt ein, um gezielter zu vergleichen."}</p>
-        <div class="offer-grid">
-          ${compareMarkets.map(m=>`<div class="offer">
-            <b>${m.name}</b>
-            <span>Offizielle Angebote öffnen</span>
-            <button class="btn primary" style="margin-top:7px" onclick="openMarketOffer('${m.name}')">Angebote prüfen</button>
-          </div>`).join("")}
-        </div>
-        <div class="card" style="margin-top:12px;background:#f7faf4">
-          <b>💡 So wird der günstigste Preis bestimmt</b>
-          <p class="muted">Die App vergleicht nur verifizierte Angebotsdaten. Markt, Aktionszeitraum, Packungsgröße und Grundpreis müssen zusammenpassen. Nicht verfügbare oder abgelaufene Angebote werden nicht als „günstigster Preis“ ausgegeben.</p>
-        </div>
-      </div>`;
-  }
+  if(status) status.textContent="⚠️ Der Vergleich konnte nicht gestartet werden. Bitte PLZ/Ort prüfen und erneut versuchen.";
+  console.error("Angebotsvergleich:",err);
 }
 
-function openMarketOffer(name){
-  const loc=(state.compareLocation||"").trim();
-  const product=(state.compareProduct||"").trim();
-  const m=compareMarkets.find(x=>x.name===name);
-  if(!m) return;
-  let url=m.url;
-  // Keep official landing pages as source of truth; where a query is accepted,
-  // append a harmless search hint. The actual market selection remains on the retailer site.
-  if(product){
-    const sep=url.includes("?")?"&":"?";
-    url += sep+"q="+encodeURIComponent(product);
-  }
-  window.open(url,"_blank","noopener");
-}
 
+document.addEventListener("DOMContentLoaded", function(){
+  const start=document.getElementById("startCompareBtn");
+  const profile=document.getElementById("profileCompareBtn");
+  if(start) start.addEventListener("click", startSmartCompare);
+  if(profile) profile.addEventListener("click", compareFromProfile);
+
+  try{
+    const saved=JSON.parse(localStorage.getItem("fep_compare")||"null");
+    if(saved){
+      const l=document.getElementById("compareLocation");
+      const pr=document.getElementById("compareProduct");
+      if(l) l.value=saved.location||"";
+      if(pr) pr.value=saved.product||"";
+    }
+  }catch(_){}
+});
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+window.startSmartCompare=startSmartCompare; window.compareFromProfile=compareFromProfile;
 </script>
 </body></html>
