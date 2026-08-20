@@ -177,8 +177,7 @@ function useProfileZip(){const z=getState().profile.zip;if(!z){alert("Bitte zuer
 function renderRecipes(){const q=(recipeSearch.value||"").toLowerCase(),f=recipeFilter.value;let a=RECIPES.filter(r=>r.name.toLowerCase().includes(q));if(f==="Vegetarisch")a=a.filter(r=>r.veg);if(f==="Schnell")a=a.filter(r=>r.time<=20);if(f==="Kinderfreundlich")a=a.filter(r=>r.kid);const s=getState();recipeGrid.innerHTML=a.map(r=>'<article class="card recipe"><img src="'+r.img+'" alt="'+esc(r.name)+'" onerror="this.style.display=\'none\'"><div class="recipe-body"><button class="fav" onclick="toggleFav('+r.id+')">'+(s.fav?.includes(r.id)?"♥":"♡")+'</button><h3>'+esc(r.name)+'</h3><span class="tag">⏱ '+r.time+' Min.</span>'+(r.veg?'<span class="tag">🌱 Veggie</span>':'')+'<p class="small">'+r.ing.join(" · ")+'</p><div class="actions"><button onclick="openRecipe('+r.id+')">👨‍🍳 Rezept</button><button class="secondary" onclick="openRecipe('+r.id+')">Details</button></div></div></article>').join("")}
 function formatQty(q){return Number.isInteger(q)?String(q):q.toLocaleString("de-DE",{maximumFractionDigits:2});}
 
-<script>
-/* V47: fehlende Rezept-Mengenfunktion ergänzt */
+/* V48: V47 nested-script Fehler behoben – scaledIngredients */
 function scaledIngredients(recipe, people){
   const details = (typeof RECIPE_DETAILS !== "undefined" && RECIPE_DETAILS[recipe.name])
     ? RECIPE_DETAILS[recipe.name] : null;
@@ -204,7 +203,7 @@ function scaledIngredients(recipe, people){
     };
   }).filter(x=>x.name);
 }
-</script>
+
 function openRecipe(id){
  const r=RECIPES.find(x=>x.id===id), p=getState().profile.people||3, d=(typeof RECIPE_DETAILS!=='undefined'&&RECIPE_DETAILS[r.name])||{ingredients:[],steps:['Für dieses Rezept ist noch keine Zubereitungsanleitung hinterlegt.']};
  const ing=scaledIngredients(r,p);
@@ -720,5 +719,41 @@ document.addEventListener("click",function(ev){
 .fep46-image{display:block;width:100%;max-height:300px;object-fit:cover;border-radius:18px;margin-bottom:16px}
 .fep46-content li{margin:8px 0}
 </style>
+
+
+<script>
+/* V48: Navigation safety layer */
+(function(){
+  function fepNavigate(id){
+    var target=document.getElementById(id);
+    if(!target) return false;
+    document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+    target.classList.add("active");
+    document.querySelectorAll("nav button").forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-v")===id);
+    });
+    window.scrollTo(0,0);
+    try{
+      if(id==="recipes" && typeof renderRecipes==="function") renderRecipes();
+      if(id==="shopping" && typeof renderShopping==="function") renderShopping();
+      if(id==="week" && typeof renderWeek==="function") renderWeek();
+      if(id==="offers" && typeof loadOfferZip==="function") loadOfferZip();
+    }catch(e){ console.error("Navigation render error",id,e); }
+    return true;
+  }
+  window.fepNavigate=fepNavigate;
+  document.addEventListener("click",function(ev){
+    var b=ev.target.closest("nav button[data-v]");
+    if(!b) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    fepNavigate(b.getAttribute("data-v"));
+  },true);
+  window.addEventListener("DOMContentLoaded",function(){
+    var active=document.querySelector("nav button.active");
+    if(!active) fepNavigate("home");
+  });
+})();
+</script>
 
 </body></html>
