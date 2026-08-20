@@ -129,7 +129,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   });
 })();
 </script>
-<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div id="shopList"></div></div></section>
+<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div id="shopList"></div></div></section>
 </main>
 
 <nav><button data-v="home" onclick="show('home')"><span>🏠</span>Start</button><button data-v="week" onclick="show('week')"><span>📅</span>Woche</button><button data-v="recipes" onclick="show('recipes')"><span>🍲</span>Rezepte</button><button data-v="offers" onclick="show('offers')"><span>🏆</span>Angebote</button><button data-v="shopping" onclick="show('shopping')"><span>🧺</span>Einkauf</button></nav>
@@ -755,5 +755,73 @@ document.addEventListener("click",function(ev){
   });
 })();
 </script>
+
+
+<script>
+window.FEP_V49 = {
+  getState(){ return typeof getState==="function" ? getState() : {}; },
+  save(st){ if(typeof put==="function") put(st); else if(typeof saveState==="function") saveState(st); },
+  normalize(v){ return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim(); },
+  selectedRecipes(){
+    const st=this.getState(), week=Array.isArray(st.week)?st.week:[], list=(typeof RECIPES!=="undefined"?RECIPES:[]);
+    return week.map(d=>list.find(r=>String(r.id)===String(d.recipeId))).filter(Boolean);
+  },
+  aggregateShopping(){
+    const st=this.getState(), people=Number(st.profile?.people||3), items=[];
+    this.selectedRecipes().forEach(r=>{
+      let ing=[]; try{ing=typeof scaledIngredients==="function"?scaledIngredients(r,people):(r.ingredients||r.zutaten||[])}catch(e){}
+      ing.forEach(i=>{ if(typeof i==="string") items.push({name:i,qty:0,unit:""}); else items.push({name:i.name||i.ingredient||i.zutat||"",qty:Number(i.qty||i.amount||i.menge||0),unit:i.unit||i.einheit||""}); });
+    });
+    return (window.FEP_V43?.aggregate?window.FEP_V43.aggregate(items):items).map(x=>({...x,checked:false,owned:false}));
+  },
+  saveShopping(){
+    const st=this.getState(), old=Array.isArray(st.shoppingList)?st.shoppingList:[], fresh=this.aggregateShopping();
+    const om=new Map(old.map(x=>[this.normalize(x.name),x]));
+    st.shoppingList=fresh.map(x=>({...x,checked:!!om.get(this.normalize(x.name))?.checked,owned:!!om.get(this.normalize(x.name))?.owned}));
+    this.save(st); try{localStorage.setItem("fep_shopping_list",JSON.stringify(st.shoppingList))}catch(e){}
+    return st.shoppingList;
+  },
+  toggleShopping(name,field){
+    const st=this.getState(), row=(st.shoppingList||[]).find(x=>this.normalize(x.name)===this.normalize(name));
+    if(row){row[field]=!row[field];this.save(st);}
+    this.renderShopping();
+  },
+  renderShopping(){
+    const st=this.getState(), list=Array.isArray(st.shoppingList)&&st.shoppingList.length?st.shoppingList:this.saveShopping(), el=document.getElementById("shopList");
+    if(!el)return;
+    el.innerHTML='<div class="v49-shopping-head"><b>🛒 '+list.filter(x=>!x.checked&&!x.owned).length+' offen</b><span>'+list.filter(x=>x.checked).length+' abgehakt</span></div>'+
+      list.map(x=>'<div class="v49-shop-row '+(x.checked||x.owned?'done':'')+'"><button class="v49-check" data-v49-toggle="checked" data-v49-name="'+encodeURIComponent(x.name)+'">'+(x.checked?'☑':'☐')+'</button><div><b>'+esc(x.name)+'</b><div class="small">'+formatQty(x.qty)+' '+esc(x.unit||'')+'</div></div><button class="v49-owned" data-v49-toggle="owned" data-v49-name="'+encodeURIComponent(x.name)+'">'+(x.owned?'✓ Vorhanden':'Vorhanden')+'</button></div>').join("");
+  },
+  compareStores(){
+    const st=this.getState(), list=st.shoppingList||this.saveShopping(), stores={Lidl:0,REWE:0,Kaufland:0,"ALDI Süd":0,"denn's":0};
+    const rows=list.filter(x=>!x.owned).map(x=>{
+      const key=typeof findOfferKey==="function"?findOfferKey(x.name):x.name, offers=(typeof OFFERS!=="undefined"&&OFFERS[key])||[], best=offers.slice().sort((a,b)=>a[1]-b[1])[0];
+      const cat=(typeof INGREDIENT_CATALOG!=="undefined"?INGREDIENT_CATALOG[x.name]:null)||{}, pack=Number(cat.pack||0), packs=pack?Math.max(1,Math.ceil(Number(x.qty||0)/pack)):1, price=best?Number(best[1]):Number(cat.price||0), store=best?best[0]:"Planpreis";
+      if(stores[store]!=null)stores[store]+=price*packs;
+      return {...x,store,unitPrice:price,packs,total:price*packs};
+    });
+    const ranked=Object.entries(stores).filter(([,v])=>v>0).sort((a,b)=>a[1]-b[1]); st.storeComparison={ranked,rows,updated:new Date().toISOString()}; this.save(st); return {ranked,rows};
+  },
+  renderStoreComparison(){
+    const r=this.compareStores(), el=document.getElementById("storeComparison"); if(!el)return; const best=r.ranked[0];
+    el.innerHTML='<h3>🏆 Günstigster Gesamteinkauf</h3>'+(best?'<div class="v49-best-store"><b>'+esc(best[0])+'</b><strong>'+best[1].toFixed(2).replace(".",",")+' €</strong></div>':'<p>Keine Vergleichsdaten vorhanden.</p>')+
+      '<div class="v49-store-grid">'+r.ranked.map((x,i)=>'<div><span>'+(i===0?'🥇 ':i===1?'🥈 ':'')+esc(x[0])+'</span><b>'+x[1].toFixed(2).replace(".",",")+' €</b></div>').join("")+'</div><div class="small">🟡 Plan-/Bestandsdaten.</div>';
+  },
+  replaceRecipe(dayIndex){
+    const st=this.getState(), week=st.week||[], recipes=(typeof RECIPES!=="undefined"?RECIPES:[]), name=prompt("Neues Rezept für "+(week[dayIndex]?.day||"diesen Tag")+":\n\n"+recipes.map(r=>r.name||r.title).slice(0,30).join("\n"));
+    if(!name)return; const r=recipes.find(x=>this.normalize(x.name||x.title)===this.normalize(name)); if(r){week[dayIndex].recipeId=r.id;this.save(st);if(typeof renderWeek==="function")renderWeek();}
+  },
+  addFavorite(id){const st=this.getState();st.favorites=Array.isArray(st.favorites)?st.favorites:[];if(!st.favorites.includes(id))st.favorites.push(id);this.save(st);},
+  removeFavorite(id){const st=this.getState();st.favorites=(st.favorites||[]).filter(x=>x!==id);this.save(st);},
+  updateBudget(){const st=this.getState(), budget=Number(st.profile?.budget||0), cmp=this.compareStores(), total=cmp.ranked[0]?.[1]||0, el=document.getElementById("budgetStatus");if(el)el.innerHTML=budget?'Budget: <b>'+budget.toFixed(2).replace(".",",")+' €</b> · Einkauf: <b>'+total.toFixed(2).replace(".",",")+' €</b> · '+(total<=budget?'🟢 '+(budget-total).toFixed(2).replace(".",",")+' € übrig':'🔴 '+(total-budget).toFixed(2).replace(".",",")+' € über Budget'):'Kein Wochenbudget festgelegt.';
+  },
+  mobileSetup(){document.documentElement.classList.add("fep-v49-mobile");document.querySelectorAll("button").forEach(b=>{if(!b.style.minHeight)b.style.minHeight="44px";});}
+};
+document.addEventListener("DOMContentLoaded",function(){FEP_V49.mobileSetup();});
+document.addEventListener("click",function(ev){const b=ev.target.closest("[data-v49-toggle]");if(!b||!window.FEP_V49)return;const name=decodeURIComponent(b.getAttribute("data-v49-name")||""),field=b.getAttribute("data-v49-toggle");if(name&&(field==="checked"||field==="owned"))FEP_V49.toggleShopping(name,field);});
+</script>
+<style>
+.v49-shopping-head{display:flex;justify-content:space-between;margin-bottom:10px}.v49-shop-row{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #e7ece5}.v49-shop-row.done{opacity:.55;text-decoration:line-through}.v49-check{font-size:22px}.v49-owned{border:1px solid #d4dfd1;background:#fff;border-radius:10px;padding:7px 9px}.v49-best-store{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:16px;background:#eef7eb;margin:10px 0}.v49-best-store strong{font-size:1.3em}.v49-store-grid{display:grid;gap:8px}.v49-store-grid>div{display:flex;justify-content:space-between;padding:10px;border:1px solid #e2e8e0;border-radius:12px}.fep-v49-mobile button{touch-action:manipulation}
+</style>
 
 </body></html>
