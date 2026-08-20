@@ -859,23 +859,7 @@ window.FEP_V49 = {
     return {ranked:commonStores,rows,missing,coverage};
   },
 
-  renderStoreComparison(){
-    const r=this.compareStores(), el=document.getElementById("storeComparison"); if(!el)return;
-    const best=r.ranked[0];
-    let html='<h3>🏆 Gesamteinkauf – echter Datenstand</h3>';
-    if(best){
-      html+='<div class="v49-best-store"><div><b>Günstigster bisher vergleichbarer Händler</b><div class="small">'+esc(best.store)+'</div></div><strong>'+best.total.toFixed(2).replace(".",",")+' €</strong></div>';
-      html+='<div class="v49-store-grid">'+r.ranked.map((x,i)=>'<div><span>'+(i===0?'🥇 ':i===1?'🥈 ':'')+esc(x.store)+'</span><b>'+x.total.toFixed(2).replace(".",",")+' €</b></div>').join("")+'</div>';
-    }else{
-      html+='<div class="notice">⚠️ Für die aktuelle Einkaufsliste sind noch keine Händlerpreise hinterlegt.</div>';
-    }
-    html+='<div class="v51-coverage"><b>Preisabdeckung:</b> '+r.coverage.priced+' von '+r.coverage.items+' Artikeln haben einen hinterlegten Händlerpreis.</div>';
-    if(r.missing.length){
-      html+='<div class="notice warn"><b>⚠️ Noch ohne Händlerpreis</b><ul>'+r.missing.map(x=>'<li>'+esc(x.name)+' – '+esc(formatQty(x.qty))+' '+esc(x.unit)+'</li>').join("")+'</ul><div class="small">Diese Artikel werden nicht fälschlich mit dem Milchpreis oder einem anderen Ersatzpreis berechnet.</div></div>';
-    }
-    html+='<div class="small">ℹ️ Die angezeigten Werte sind derzeit Start-/Testdaten und keine bestätigten Livepreise. Erst bei einer echten Händler-/Datenquellenanbindung dürfen sie als aktuelle Marktpreise bezeichnet werden.</div>';
-    el.innerHTML=html;
-  },
+  renderStoreComparison(){ if(window.FEP_V52) FEP_V52.render(); },
   replaceRecipe(dayIndex){
     const st=this.getState(), week=st.week||[], recipes=(typeof RECIPES!=="undefined"?RECIPES:[]), name=prompt("Neues Rezept für "+(week[dayIndex]?.day||"diesen Tag")+":\n\n"+recipes.map(r=>r.name||r.title).slice(0,30).join("\n"));
     if(!name)return; const r=recipes.find(x=>this.normalize(x.name||x.title)===this.normalize(name)); if(r){week[dayIndex].recipeId=r.id;this.save(st);if(typeof renderWeek==="function")renderWeek();}
@@ -897,6 +881,70 @@ document.addEventListener("click",function(ev){const b=ev.target.closest("[data-
 <style>
 .v51-coverage{margin:10px 0;padding:12px;border-radius:12px;background:#f5f7f3}
 .notice.warn{background:#fff7df;border:1px solid #ead69b}
+</style>
+
+
+<script>
+/* V52 – Preis-Engine: Händlerpreis zuerst, Web-Durchschnitt als Fallback */
+const FEP_V52_PRICES={"Spaghetti": {"price": 0.69, "pack": 500, "unit": "g", "source": "ALDI SÜD / Lidl", "kind": "web-average", "asof": "2026-08"}, "Tomaten": {"price": 1.5, "pack": 500, "unit": "g", "source": "Kaufland / Web-Preisradar", "kind": "web-average", "asof": "2026-06"}, "Hackfleisch": {"price": 6.2, "pack": 500, "unit": "g", "source": "ALDI SÜD / REWE / Lidl", "kind": "web-average", "asof": "2026-08"}, "Zwiebel": {"price": 1.05, "pack": 1000, "unit": "g", "source": "Lidl / Kaufland", "kind": "web-average", "asof": "2026-08"}, "Hähnchen": {"price": 4.95, "pack": 500, "unit": "g", "source": "REWE (420g hochgerechnet)", "kind": "web-benchmark", "asof": "2026-06"}, "Reis": {"price": 1.49, "pack": 1000, "unit": "g", "source": "Kaufland / Web-Preisradar", "kind": "web-average", "asof": "2026-06"}, "Kokosmilch": {"price": 0.99, "pack": 400, "unit": "ml", "source": "Kaufland", "kind": "web-benchmark", "asof": "2026-06"}, "Paprika": {"price": 0.51, "pack": 1, "unit": "Stück", "source": "Kaufland", "kind": "web-benchmark", "asof": "2026-06"}, "Kidneybohnen": {"price": 0.89, "pack": 1, "unit": "Dose", "source": "Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Mais": {"price": 0.79, "pack": 1, "unit": "Dose", "source": "REWE / Web-Preisradar", "kind": "web-average", "asof": "2026-06"}, "Linsen": {"price": 0.99, "pack": 500, "unit": "g", "source": "Aldi / Web-Preisradar", "kind": "web-average", "asof": "2026-06"}, "Curry": {"price": 0.2, "pack": 1, "unit": "Pauschale", "source": "Aldi / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Feta": {"price": 1.5, "pack": 200, "unit": "g", "source": "Aldi / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Zucchini": {"price": 0.5, "pack": 1, "unit": "Stück", "source": "Kaufland", "kind": "web-benchmark", "asof": "2026-06"}, "Pesto": {"price": 1.69, "pack": 200, "unit": "g", "source": "ALDI SÜD / Lidl", "kind": "web-average", "asof": "2026-08"}, "Parmesan": {"price": 2.66, "pack": 100, "unit": "g", "source": "ALDI SÜD (Grana Padano, 150g → 100g)", "kind": "web-benchmark", "asof": "2026-08"}, "Tofu": {"price": 1.99, "pack": 200, "unit": "g", "source": "Idealo / REWE product range", "kind": "web-benchmark", "asof": "2026-07"}, "Wraps": {"price": 1.29, "pack": 6, "unit": "Stück", "source": "Kaufland / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Salat": {"price": 1.29, "pack": 1, "unit": "Stück", "source": "Web-Durchschnitt, Discounter", "kind": "web-average", "asof": "2026-06"}, "Haferflocken": {"price": 0.79, "pack": 500, "unit": "g", "source": "Kaufland / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Banane": {"price": 0.12, "pack": 1, "unit": "Stück", "source": "Kaufland / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Milch": {"price": 0.99, "pack": 1000, "unit": "ml", "source": "Kaufland / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Eier": {"price": 2.49, "pack": 10, "unit": "Stück", "source": "Discounter / REWE / Web-Preisradar", "kind": "web-average", "asof": "2026-06"}, "Kartoffeln": {"price": 2.5, "pack": 2500, "unit": "g", "source": "Aldi / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Karotten": {"price": 1.19, "pack": 1000, "unit": "g", "source": "Kaufland / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Sahne": {"price": 0.99, "pack": 200, "unit": "ml", "source": "Web-Durchschnitt Discounter", "kind": "web-average", "asof": "2026-08"}, "Burgerbrötchen": {"price": 1.55, "pack": 4, "unit": "Stück", "source": "Lidl / Aldi Nord", "kind": "web-average", "asof": "2026-08"}, "Patty": {"price": 2.8, "pack": 2, "unit": "Stück", "source": "Lidl Chef Select, 2×100g hochgerechnet", "kind": "web-benchmark", "asof": "2026-06"}, "Käse": {"price": 1.99, "pack": 250, "unit": "g", "source": "Lidl / Web-Preisradar", "kind": "web-benchmark", "asof": "2026-06"}, "Gemüse": {"price": 1.79, "pack": 750, "unit": "g", "source": "Kaufland TK-Gemüsemix", "kind": "web-benchmark", "asof": "2026-06"}, "Chiasamen": {"price": 3.49, "pack": 300, "unit": "g", "source": "Web-Durchschnitt", "kind": "web-average", "asof": "2026-08"}, "Beeren": {"price": 1.79, "pack": 300, "unit": "g", "source": "Kaufland TK-Beeren", "kind": "web-benchmark", "asof": "2026-06"}};
+const FEP_V52_STORES=["REWE", "Lidl", "ALDI SÜD", "Kaufland", "Denns BioMarkt", "EDEKA"];
+const FEP_V52_OFFICIAL={
+ "REWE":"https://www.rewe.de/shop/",
+ "Lidl":"https://www.lidl.de/",
+ "ALDI SÜD":"https://www.aldi-sued.de/",
+ "Kaufland":"https://www.kaufland.de/",
+ "Denns BioMarkt":"https://www.denns-biomarkt.de/",
+ "EDEKA":"https://www.edeka.de/"
+};
+window.FEP_V52={
+ norm(v){return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();},
+ priceFor(name,store){
+   const key=Object.keys(FEP_V52_PRICES).find(k=>this.norm(k)===this.norm(name))||name;
+   const base=FEP_V52_PRICES[key];
+   if(!base)return null;
+   const existing=(typeof OFFERS!=="undefined"&&OFFERS[key]||[]).find(x=>x[0]===store);
+   if(existing&&Number.isFinite(Number(existing[1]))) return {price:Number(existing[1]),kind:"merchant",source:"Händlerdaten",asof:"2026-08"};
+   return {price:base.price,kind:base.kind,source:base.source,asof:base.asof};
+ },
+ getCatalog(name){
+   const c=(typeof INGREDIENT_CATALOG!=="undefined"?INGREDIENT_CATALOG[name]:null)||{};
+   const b=FEP_V52_PRICES[name];
+   return {pack:Number(c.pack||b?.pack||1),unit:c.unit||b?.unit||"",price:Number(c.price||b?.price||0)};
+ },
+ qtyPacks(item){
+   const c=this.getCatalog(item.name), q=Number(item.qty||0);
+   if(!q)return 1;
+   if(c.unit==="Stück" && item.unit==="Stück")return Math.max(1,Math.ceil(q/c.pack));
+   if(c.unit==="Dose" || c.unit==="Pauschale")return Math.max(1,Math.ceil(q/c.pack));
+   return Math.max(1,Math.ceil(q/c.pack));
+ },
+ compare(){
+   const st=typeof getState==="function"?getState():{}, list=Array.isArray(st.shoppingList)?st.shoppingList:[];
+   const rows=list.filter(x=>!x.owned).map(item=>{
+     const packs=this.qtyPacks(item);
+     const offers=FEP_V52_STORES.map(store=>{const p=this.priceFor(item.name,store);return p?{store,price:p.price,packs,total:p.price*packs,kind:p.kind,source:p.source,asof:p.asof}:null;}).filter(Boolean);
+     return {...item,packs,offers,cheapest:offers.slice().sort((a,b)=>a.total-b.total)[0]||null};
+   });
+   const totals={}; FEP_V52_STORES.forEach(x=>totals[x]=0);
+   rows.forEach(r=>r.offers.forEach(o=>totals[o.store]+=o.total));
+   const ranked=Object.entries(totals).map(([store,total])=>({store,total})).sort((a,b)=>a.total-b.total);
+   return {rows,ranked};
+ },
+ render(){
+   const r=this.compare(), el=document.getElementById("storeComparison"); if(!el)return;
+   const best=r.ranked[0];
+   let h='<h3>🏆 Gesamteinkauf – Preisvergleich</h3>';
+   h+=best?'<div class="v52-best"><div><b>Günstigster berechneter Warenkorb</b><div>'+esc(best.store)+'</div></div><strong>'+best.total.toFixed(2).replace(".",",")+' €</strong></div>':'<div class="notice">Keine Artikel in der Einkaufsliste.</div>';
+   h+='<div class="v52-grid">'+r.ranked.map((x,i)=>'<div><span>'+(i===0?'🥇 ':i===1?'🥈 ':'')+esc(x.store)+'</span><b>'+x.total.toFixed(2).replace(".",",")+' €</b></div>').join("")+'</div>';
+   h+='<div class="v52-items"><h4>Preis je Artikel</h4>'+r.rows.map(row=>'<div class="v52-item"><b>'+esc(row.name)+'</b><div class="small">'+formatQty(row.qty)+' '+esc(row.unit||'')+' · '+row.packs+' Packung(en)</div><div class="v52-prices">'+row.offers.map(o=>'<span><b>'+esc(o.store)+'</b> '+o.total.toFixed(2).replace(".",",")+' € <em class="'+o.kind+'">'+(o.kind==="merchant"?'Händler':'Web')+'</em></span>').join("")+'</div></div>').join("")+'</div>';
+   h+='<div class="small">🔵 Händlerpreis = hinterlegte Händlerquelle. 🟡 Web = Fallback-Durchschnitt/Benchmark aus öffentlich auffindbaren Preisquellen. Standort- und Aktionspreise können abweichen.</div>';
+   el.innerHTML=h;
+   const budgetEl=document.getElementById("budgetStatus"); const budget=Number(st?.profile?.budget||0);
+ },
+};
+</script>
+<style>
+.v52-best{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:16px;background:#eef7eb;margin:10px 0}.v52-best strong{font-size:1.3em}.v52-grid{display:grid;gap:8px}.v52-grid>div{display:flex;justify-content:space-between;padding:10px;border:1px solid #e2e8e0;border-radius:12px}.v52-item{padding:12px 0;border-bottom:1px solid #e5e9e4}.v52-prices{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.v52-prices span{padding:7px;border:1px solid #e5e9e4;border-radius:9px;font-size:.92em}.v52-prices em{font-style:normal;font-size:.75em;margin-left:4px}.v52-prices .merchant{color:#24633a}.v52-prices .web{color:#8a6a00}
 </style>
 
 </body></html>
