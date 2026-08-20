@@ -129,7 +129,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   });
 })();
 </script>
-<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div id="shopList"></div></div></section>
+<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div id="shopList"></div></div></section>
 </main>
 
 <nav><button data-v="home" onclick="show('home')"><span>🏠</span>Start</button><button data-v="week" onclick="show('week')"><span>📅</span>Woche</button><button data-v="recipes" onclick="show('recipes')"><span>🍲</span>Rezepte</button><button data-v="offers" onclick="show('offers')"><span>🏆</span>Angebote</button><button data-v="shopping" onclick="show('shopping')"><span>🧺</span>Einkauf</button></nav>
@@ -480,6 +480,125 @@ document.addEventListener("DOMContentLoaded",function(){
  if(b)b.addEventListener("click",function(){
    if(window.FEP_V44) window.FEP_V44.renderShoppingCompare();
  });
+});
+</script>
+
+
+<script>
+/* V45: Wochenplan -> Einkaufsliste robust verbinden */
+window.FEP_V45 = {
+  transferWeekToShopping() {
+    try {
+      const state = typeof getState === "function" ? getState() : {};
+      const people = Number((state.profile && state.profile.people) || state.people || 3);
+
+      let days = Array.isArray(state.week) ? state.week : [];
+      let recipes = (typeof RECIPES !== "undefined" && Array.isArray(RECIPES)) ? RECIPES : [];
+
+      const selected = [];
+      days.forEach(day => {
+        const id = day && (day.recipeId ?? day.recipe ?? day.id);
+        if (id == null || id === "") return;
+        const r = recipes.find(x => String(x.id) === String(id) || String(x.slug || "") === String(id));
+        if (r) selected.push(r);
+      });
+
+      // Some versions store recipe objects directly in the week.
+      if (!selected.length) {
+        days.forEach(day => {
+          if (day && (day.ingredients || day.zutaten)) selected.push(day);
+        });
+      }
+
+      const items = [];
+      selected.forEach(r => {
+        let ingredients = [];
+        if (typeof scaledIngredients === "function") {
+          try { ingredients = scaledIngredients(r, people) || []; } catch(e) {}
+        }
+        if (!ingredients.length) ingredients = r.ingredients || r.zutaten || [];
+        ingredients.forEach(i => {
+          if (typeof i === "string") items.push({name:i, qty:0, unit:""});
+          else items.push({
+            name: i.name || i.ingredient || i.zutat || "",
+            qty: Number(i.qty ?? i.amount ?? i.menge ?? i.quantity ?? 0),
+            unit: i.unit || i.einheit || ""
+          });
+        });
+      });
+
+      const aggregate = window.FEP_V43 && typeof window.FEP_V43.aggregate === "function"
+        ? window.FEP_V43.aggregate(items)
+        : items;
+
+      // Use the app's existing shopping-list state functions where available.
+      let written = false;
+      const candidateFns = [
+        "setShoppingList", "saveShoppingList", "updateShoppingList",
+        "replaceShoppingList", "setShopList"
+      ];
+      for (const fn of candidateFns) {
+        if (typeof window[fn] === "function") {
+          try {
+            window[fn](aggregate);
+            written = true;
+            break;
+          } catch(e) {}
+        }
+      }
+
+      // Fallback: persist a normalized list under the same localStorage key
+      // and expose it for the existing renderer.
+      if (!written) {
+        const payload = aggregate.map(x => ({
+          name: x.name,
+          qty: Number(x.qty || 0),
+          unit: x.unit || ""
+        }));
+        localStorage.setItem("fep_shopping_list", JSON.stringify(payload));
+        try {
+          state.shoppingList = payload;
+          if (typeof saveState === "function") saveState(state);
+        } catch(e) {}
+        written = true;
+      }
+
+      // Refresh known renderers.
+      ["renderShoppingList", "renderShopList", "renderShopping", "renderAll"].forEach(fn => {
+        if (typeof window[fn] === "function") {
+          try { window[fn](); } catch(e) {}
+        }
+      });
+
+      const target = document.getElementById("shopList");
+      if (target && aggregate.length) {
+        target.scrollIntoView({behavior:"smooth", block:"start"});
+      }
+
+      return {ok:true, count:aggregate.length, recipes:selected.length};
+    } catch (e) {
+      console.error("FEP_V45 transfer error", e);
+      return {ok:false, error:String(e)};
+    }
+  }
+};
+
+document.addEventListener("DOMContentLoaded", function(){
+  const buttons = Array.from(document.querySelectorAll("button"));
+  buttons.filter(b => /Wochenplan\s+übernehmen/i.test(b.textContent || "")).forEach(b => {
+    b.addEventListener("click", function(ev){
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      const result = window.FEP_V45.transferWeekToShopping();
+      const msg = document.getElementById("v45TransferStatus");
+      if (msg) {
+        msg.textContent = result.ok
+          ? "✅ " + result.count + " Zutaten aus " + result.recipes + " Rezept(en) übernommen."
+          : "⚠️ Der Wochenplan konnte nicht übernommen werden.";
+        msg.style.display = "block";
+      }
+    }, true);
+  });
 });
 </script>
 
