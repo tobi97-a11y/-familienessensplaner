@@ -98,7 +98,38 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <div class="offer"><div><b>kaufDA</b><div class="small">Standortbezogene Prospekte/Angebote als mögliche Aggregator-Quelle; Nutzung/Automatisierung muss vor produktivem Einsatz vertraglich/API-seitig geklärt werden.</div></div><a target="_blank" href="https://www.kaufda.de/">Quelle öffnen</a></div>
 </div>
 </section>
-<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shopList"></div></div></section>
+
+<section id="v43WorkflowCheck" class="card" style="margin:12px 0;">
+  <h3>🔎 Einkaufs- & Preisvergleich prüfen</h3>
+  <p style="color:#667066;">Testet, ob Zutaten aus mehreren Rezepten zusammengeführt werden.</p>
+  <button type="button" id="v43RunCheck" class="primary">Test durchführen</button>
+  <div id="v43CheckResult" style="margin-top:10px;"></div>
+</section>
+<script>
+(function(){
+  function run(){
+    const sample=[
+      {name:"Tomaten",qty:500,unit:"g"},
+      {name:"tomaten",qty:300,unit:"g"},
+      {name:"Zwiebel",qty:2,unit:"Stück"},
+      {name:"Zwiebel",qty:1,unit:"Stück"}
+    ];
+    const result=window.FEP_V43.aggregate(sample);
+    const tomatoes=result.find(x=>window.FEP_V43.normalizeName(x.name)==="tomaten");
+    const onions=result.find(x=>window.FEP_V43.normalizeName(x.name)==="zwiebel");
+    const ok=tomatoes && tomatoes.qty===800 && onions && onions.qty===3;
+    const out=document.getElementById("v43CheckResult");
+    out.innerHTML=ok
+      ? "✅ Zusammenführung funktioniert: Tomaten 800 g · Zwiebel 3 Stück"
+      : "⚠️ Zusammenführung bitte prüfen.";
+  }
+  document.addEventListener("DOMContentLoaded",function(){
+    const b=document.getElementById("v43RunCheck");
+    if(b)b.addEventListener("click",run);
+  });
+})();
+</script>
+<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div id="shopList"></div></div></section>
 </main>
 
 <nav><button data-v="home" onclick="show('home')"><span>🏠</span>Start</button><button data-v="week" onclick="show('week')"><span>📅</span>Woche</button><button data-v="recipes" onclick="show('recipes')"><span>🍲</span>Rezepte</button><button data-v="offers" onclick="show('offers')"><span>🏆</span>Angebote</button><button data-v="shopping" onclick="show('shopping')"><span>🧺</span>Einkauf</button></nav>
@@ -367,4 +398,89 @@ async function compareViaBackend(products){
   return response.json();
 }
 </script>
+
+<script>
+/* V43: zentrale Mengen-/Zutatenaggregation für Einkauf & Preisvergleich */
+window.FEP_V43 = {
+  normalizeName(name) {
+    return String(name || "").trim().toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+  },
+  aggregate(items) {
+    const map = new Map();
+    (items || []).forEach(item => {
+      const name = typeof item === "string" ? item : (item.name || item.ingredient || "");
+      if (!name) return;
+      const key = this.normalizeName(name);
+      const qty = Number(item.qty ?? item.amount ?? 0);
+      const unit = item.unit || "";
+      if (!map.has(key)) map.set(key, {name, qty: 0, unit});
+      const row = map.get(key);
+      if (Number.isFinite(qty) && qty) row.qty += qty;
+    });
+    return [...map.values()];
+  },
+  fromRecipes(recipes) {
+    const items = [];
+    (recipes || []).forEach(r => {
+      (r.ingredients || r.zutaten || []).forEach(i => {
+        if (typeof i === "string") items.push({name:i});
+        else items.push(i);
+      });
+    });
+    return this.aggregate(items);
+  }
+};
+</script>
+
+
+<script>
+window.FEP_V44 = {
+  compareShoppingList(){
+    const s = typeof getState==="function" ? getState() : {};
+    const rows = (window.FEP_V43 && window.FEP_V43.fromRecipes) ? [] : [];
+    const week = (s.week||[]).filter(d=>d.recipeId).map(d=>RECIPES.find(r=>r.id===d.recipeId)).filter(Boolean);
+    const items=[];
+    week.forEach(r=>{
+      if(typeof scaledIngredients==="function"){
+        scaledIngredients(r,s.profile?.people||3).forEach(x=>items.push(x));
+      }
+    });
+    const agg=(window.FEP_V43&&window.FEP_V43.aggregate)?window.FEP_V43.aggregate(items):items;
+    return agg.map(i=>{
+      const key=typeof findOfferKey==="function"?findOfferKey(i.name):i.name;
+      const offers=(typeof OFFERS!=="undefined"&&OFFERS[key])?OFFERS[key].slice().sort((a,b)=>a[1]-b[1]):[];
+      const cat=(typeof INGREDIENT_CATALOG!=="undefined"?INGREDIENT_CATALOG[i.name]:null)||{};
+      const pack=Number(cat.pack||0);
+      const packs=pack?Math.ceil(Number(i.qty||0)/pack):1;
+      const best=offers[0]||null;
+      const price=best?Number(best[1]):Number(cat.price||0);
+      return {name:i.name,qty:i.qty,unit:i.unit,pack,packages:packs,bestMarket:best?best[0]:null,price,total:price*packs,live:false};
+    });
+  },
+  renderShoppingCompare(){
+    const rows=this.compareShoppingList();
+    const total=rows.reduce((a,r)=>a+r.total,0);
+    const target=document.getElementById("shopList");
+    if(!target)return;
+    target.innerHTML='<div class="card"><h3>🏆 Preisvergleich für deine Einkaufsliste</h3>'+
+      '<p class="muted">Alle Zutaten des aktuellen Wochenplans, zusammengefasst nach Zutat und Familiengröße.</p>'+
+      rows.map(r=>'<div class="offer '+(r.bestMarket?'best':'')+'"><div><b>'+esc(r.name)+'</b><div class="small">Benötigt: '+formatQty(r.qty)+' '+esc(r.unit||'')+' · '+r.packages+' Packung(en)</div><div class="small">'+(r.bestMarket?'🥇 '+esc(r.bestMarket):'Kein Händlerangebot vorhanden')+'</div></div><div class="price">'+(r.price? r.total.toFixed(2).replace(".",",")+' €':'–')+'</div></div>').join('')+
+      '<div class="notice ok">💶 Geschätzte Einkaufssumme: <b>'+total.toFixed(2).replace(".",",")+' €</b></div>'+
+      '<div class="notice">🟡 Die aktuell angezeigten Werte sind Plan-/Bestandsdaten. Echte Live-Händlerpreise werden nach Anschluss der zugelassenen Datenquellen automatisch verwendet.</div></div>';
+  }
+};
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+ const b=document.getElementById("compareShoppingNow");
+ if(b)b.addEventListener("click",function(){
+   if(window.FEP_V44) window.FEP_V44.renderShoppingCompare();
+ });
+});
+</script>
+
 </body></html>
