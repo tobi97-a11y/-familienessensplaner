@@ -176,8 +176,37 @@ function updateHome(){const s=getState(),p=s.profile;document.getElementById("sP
 function useProfileZip(){const z=getState().profile.zip;if(!z){alert("Bitte zuerst im Familienprofil eine PLZ oder einen Ort speichern.");show("profile");return}offerZip.value=z;compareProduct()}
 function renderRecipes(){const q=(recipeSearch.value||"").toLowerCase(),f=recipeFilter.value;let a=RECIPES.filter(r=>r.name.toLowerCase().includes(q));if(f==="Vegetarisch")a=a.filter(r=>r.veg);if(f==="Schnell")a=a.filter(r=>r.time<=20);if(f==="Kinderfreundlich")a=a.filter(r=>r.kid);const s=getState();recipeGrid.innerHTML=a.map(r=>'<article class="card recipe"><img src="'+r.img+'" alt="'+esc(r.name)+'" onerror="this.style.display=\'none\'"><div class="recipe-body"><button class="fav" onclick="toggleFav('+r.id+')">'+(s.fav?.includes(r.id)?"♥":"♡")+'</button><h3>'+esc(r.name)+'</h3><span class="tag">⏱ '+r.time+' Min.</span>'+(r.veg?'<span class="tag">🌱 Veggie</span>':'')+'<p class="small">'+r.ing.join(" · ")+'</p><div class="actions"><button onclick="openRecipe('+r.id+')">👨‍🍳 Rezept</button><button class="secondary" onclick="openRecipe('+r.id+')">Details</button></div></div></article>').join("")}
 function formatQty(q){return Number.isInteger(q)?String(q):q.toLocaleString("de-DE",{maximumFractionDigits:2});}
+
+<script>
+/* V47: fehlende Rezept-Mengenfunktion ergänzt */
+function scaledIngredients(recipe, people){
+  const details = (typeof RECIPE_DETAILS !== "undefined" && RECIPE_DETAILS[recipe.name])
+    ? RECIPE_DETAILS[recipe.name] : null;
+  const base = details && Array.isArray(details.ingredients)
+    ? details.ingredients
+    : (Array.isArray(recipe.ingredients) ? recipe.ingredients : []);
+  const basePeople = Number((details && details.servings) || 4);
+  const targetPeople = Math.max(1, Number(people) || 1);
+  const factor = targetPeople / basePeople;
+
+  return base.map(item=>{
+    if(Array.isArray(item)){
+      return {
+        name: item[0],
+        qty: Number(item[1]) * factor,
+        unit: item[2] || ""
+      };
+    }
+    return {
+      name: item.name || item.ingredient || item.zutat || "",
+      qty: Number(item.qty ?? item.amount ?? item.menge ?? item.quantity ?? 0) * factor,
+      unit: item.unit || item.einheit || ""
+    };
+  }).filter(x=>x.name);
+}
+</script>
 function openRecipe(id){
- const r=RECIPES.find(x=>x.id===id), p=getState().profile.people||3, d=RECIPE_DETAILS[r.name];
+ const r=RECIPES.find(x=>x.id===id), p=getState().profile.people||3, d=(typeof RECIPE_DETAILS!=='undefined'&&RECIPE_DETAILS[r.name])||{ingredients:[],steps:['Für dieses Rezept ist noch keine Zubereitungsanleitung hinterlegt.']};
  const ing=scaledIngredients(r,p);
  modalBody.innerHTML='<h2>'+esc(r.name)+'</h2>'+
  '<img src="'+r.img+'" style="width:100%;max-height:300px;object-fit:cover;border-radius:16px">'+
