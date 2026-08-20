@@ -792,20 +792,89 @@ window.FEP_V49 = {
     el.innerHTML='<div class="v49-shopping-head"><b>🛒 '+list.filter(x=>!x.checked&&!x.owned).length+' offen</b><span>'+list.filter(x=>x.checked).length+' abgehakt</span></div>'+
       list.map(x=>'<div class="v49-shop-row '+(x.checked||x.owned?'done':'')+'"><button class="v49-check" data-v49-toggle="checked" data-v49-name="'+encodeURIComponent(x.name)+'">'+(x.checked?'☑':'☐')+'</button><div><b>'+esc(x.name)+'</b><div class="small">'+formatQty(x.qty)+' '+esc(x.unit||'')+'</div></div><button class="v49-owned" data-v49-toggle="owned" data-v49-name="'+encodeURIComponent(x.name)+'">'+(x.owned?'✓ Vorhanden':'Vorhanden')+'</button></div>').join("");
   },
-  compareStores(){
-    const st=this.getState(), list=st.shoppingList||this.saveShopping(), stores={Lidl:0,REWE:0,Kaufland:0,"ALDI Süd":0,"denn's":0};
-    const rows=list.filter(x=>!x.owned).map(x=>{
-      const key=typeof findOfferKey==="function"?findOfferKey(x.name):x.name, offers=(typeof OFFERS!=="undefined"&&OFFERS[key])||[], best=offers.slice().sort((a,b)=>a[1]-b[1])[0];
-      const cat=(typeof INGREDIENT_CATALOG!=="undefined"?INGREDIENT_CATALOG[x.name]:null)||{}, pack=Number(cat.pack||0), packs=pack?Math.max(1,Math.ceil(Number(x.qty||0)/pack)):1, price=best?Number(best[1]):Number(cat.price||0), store=best?best[0]:"Planpreis";
-      if(stores[store]!=null)stores[store]+=price*packs;
-      return {...x,store,unitPrice:price,packs,total:price*packs};
-    });
-    const ranked=Object.entries(stores).filter(([,v])=>v>0).sort((a,b)=>a[1]-b[1]); st.storeComparison={ranked,rows,updated:new Date().toISOString()}; this.save(st); return {ranked,rows};
+  offerKeyFor(name){
+    const n=this.normalize(name);
+    const catalog=(typeof INGREDIENT_CATALOG!=="undefined"?INGREDIENT_CATALOG:{});
+    const direct=Object.keys(typeof OFFERS!=="undefined"?OFFERS:{}).find(k=>this.normalize(k)===n);
+    if(direct)return direct;
+    for(const [key,c] of Object.entries(catalog)){
+      const aliases=[key,...(c.aliases||[])].map(x=>this.normalize(x));
+      if(aliases.some(a=>a===n || n.includes(a) || a.includes(n))){
+        if(typeof OFFERS!=="undefined" && OFFERS[key]) return key;
+        const off=Object.keys(typeof OFFERS!=="undefined"?OFFERS:{}).find(k=>aliases.includes(this.normalize(k)));
+        if(off)return off;
+      }
+    }
+    if(typeof OFFERS!=="undefined"){
+      const fuzzy=Object.keys(OFFERS).find(k=>n.includes(this.normalize(k))||this.normalize(k).includes(n));
+      if(fuzzy)return fuzzy;
+    }
+    return null;
   },
+
+  compareStores(){
+    const st=this.getState(), list=Array.isArray(st.shoppingList)?st.shoppingList:this.saveShopping();
+    const storeNames=["REWE","Lidl","ALDI SÜD","Kaufland","Denns BioMarkt","EDEKA"];
+    const totals=Object.fromEntries(storeNames.map(x=>[x,0]));
+    const rows=[];
+    const missing=[];
+    list.filter(x=>!x.owned).forEach(x=>{
+      const key=this.offerKeyFor(x.name);
+      const offers=(key && typeof OFFERS!=="undefined" && OFFERS[key])?OFFERS[key]:[];
+      const catalog=(typeof INGREDIENT_CATALOG!=="undefined"?INGREDIENT_CATALOG[x.name]:null)||{};
+      const pack=Number(catalog.pack||0);
+      const qty=Number(x.qty||0);
+      const packs=pack&&qty>0?Math.max(1,Math.ceil(qty/pack)):1;
+      const storePrices={};
+      offers.forEach(pair=>{
+        const store=pair[0], price=Number(pair[1]);
+        if(Number.isFinite(price)) storePrices[store]=price;
+      });
+      const available=Object.entries(storePrices).map(([store,unitPrice])=>({
+        store,unitPrice,packs,total:unitPrice*packs
+      })).sort((a,b)=>a.total-b.total);
+      available.forEach(a=>{if(totals[a.store]!==undefined)totals[a.store]+=a.total;});
+      if(!available.length){
+        missing.push({name:x.name,qty,unit:x.unit||catalog.unit||"",reason:"Für diese Zutat ist aktuell kein Händlerpreis hinterlegt."});
+      }
+      rows.push({
+        name:x.name,qty,unit:x.unit||catalog.unit||"",packs,key,
+        available, cheapest:available[0]||null,
+        source:"Startdaten – kein Livepreis"
+      });
+    });
+
+    // Only stores with at least one actual product price are shown.
+    const ranked=Object.entries(totals)
+      .filter(([,v])=>v>0)
+      .map(([store,total])=>({store,total}))
+      .sort((a,b)=>a.total-b.total);
+
+    const comparable=rows.filter(r=>r.available.length>0);
+    const commonStores=ranked.filter(r=>comparable.length>0);
+    const coverage={items:list.filter(x=>!x.owned).length,priced:comparable.length,missing:missing.length};
+
+    st.storeComparison={ranked:commonStores,rows,missing,coverage,updated:new Date().toISOString()};
+    this.save(st);
+    return {ranked:commonStores,rows,missing,coverage};
+  },
+
   renderStoreComparison(){
-    const r=this.compareStores(), el=document.getElementById("storeComparison"); if(!el)return; const best=r.ranked[0];
-    el.innerHTML='<h3>🏆 Günstigster Gesamteinkauf</h3>'+(best?'<div class="v49-best-store"><b>'+esc(best[0])+'</b><strong>'+best[1].toFixed(2).replace(".",",")+' €</strong></div>':'<p>Keine Vergleichsdaten vorhanden.</p>')+
-      '<div class="v49-store-grid">'+r.ranked.map((x,i)=>'<div><span>'+(i===0?'🥇 ':i===1?'🥈 ':'')+esc(x[0])+'</span><b>'+x[1].toFixed(2).replace(".",",")+' €</b></div>').join("")+'</div><div class="small">🟡 Plan-/Bestandsdaten.</div>';
+    const r=this.compareStores(), el=document.getElementById("storeComparison"); if(!el)return;
+    const best=r.ranked[0];
+    let html='<h3>🏆 Gesamteinkauf – echter Datenstand</h3>';
+    if(best){
+      html+='<div class="v49-best-store"><div><b>Günstigster bisher vergleichbarer Händler</b><div class="small">'+esc(best.store)+'</div></div><strong>'+best.total.toFixed(2).replace(".",",")+' €</strong></div>';
+      html+='<div class="v49-store-grid">'+r.ranked.map((x,i)=>'<div><span>'+(i===0?'🥇 ':i===1?'🥈 ':'')+esc(x.store)+'</span><b>'+x.total.toFixed(2).replace(".",",")+' €</b></div>').join("")+'</div>';
+    }else{
+      html+='<div class="notice">⚠️ Für die aktuelle Einkaufsliste sind noch keine Händlerpreise hinterlegt.</div>';
+    }
+    html+='<div class="v51-coverage"><b>Preisabdeckung:</b> '+r.coverage.priced+' von '+r.coverage.items+' Artikeln haben einen hinterlegten Händlerpreis.</div>';
+    if(r.missing.length){
+      html+='<div class="notice warn"><b>⚠️ Noch ohne Händlerpreis</b><ul>'+r.missing.map(x=>'<li>'+esc(x.name)+' – '+esc(formatQty(x.qty))+' '+esc(x.unit)+'</li>').join("")+'</ul><div class="small">Diese Artikel werden nicht fälschlich mit dem Milchpreis oder einem anderen Ersatzpreis berechnet.</div></div>';
+    }
+    html+='<div class="small">ℹ️ Die angezeigten Werte sind derzeit Start-/Testdaten und keine bestätigten Livepreise. Erst bei einer echten Händler-/Datenquellenanbindung dürfen sie als aktuelle Marktpreise bezeichnet werden.</div>';
+    el.innerHTML=html;
   },
   replaceRecipe(dayIndex){
     const st=this.getState(), week=st.week||[], recipes=(typeof RECIPES!=="undefined"?RECIPES:[]), name=prompt("Neues Rezept für "+(week[dayIndex]?.day||"diesen Tag")+":\n\n"+recipes.map(r=>r.name||r.title).slice(0,30).join("\n"));
@@ -822,6 +891,12 @@ document.addEventListener("click",function(ev){const b=ev.target.closest("[data-
 </script>
 <style>
 .v49-shopping-head{display:flex;justify-content:space-between;margin-bottom:10px}.v49-shop-row{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #e7ece5}.v49-shop-row.done{opacity:.55;text-decoration:line-through}.v49-check{font-size:22px}.v49-owned{border:1px solid #d4dfd1;background:#fff;border-radius:10px;padding:7px 9px}.v49-best-store{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:16px;background:#eef7eb;margin:10px 0}.v49-best-store strong{font-size:1.3em}.v49-store-grid{display:grid;gap:8px}.v49-store-grid>div{display:flex;justify-content:space-between;padding:10px;border:1px solid #e2e8e0;border-radius:12px}.fep-v49-mobile button{touch-action:manipulation}
+</style>
+
+
+<style>
+.v51-coverage{margin:10px 0;padding:12px;border-radius:12px;background:#f5f7f3}
+.notice.warn{background:#fff7df;border:1px solid #ead69b}
 </style>
 
 </body></html>
