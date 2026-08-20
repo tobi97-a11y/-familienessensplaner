@@ -27,10 +27,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 
 .autocomplete-wrap{position:relative;width:100%}
 .autocomplete-wrap input{width:100%;box-sizing:border-box}
-.suggestions{position:absolute;z-index:9999;left:0;right:0;top:calc(100% + 5px);background:#fff;border:1px solid #d5ddd5;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.16);overflow:hidden;max-height:280px;overflow-y:auto}
-.suggestion{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;border:0;background:#fff;text-align:left;padding:12px 14px;cursor:pointer;font:inherit}
-.suggestion:hover,.suggestion:focus{background:#eef6eb}
-.suggestion small{color:#687268}
+
 .search-help{margin:8px 0 14px;padding:12px 14px;background:#f4f8f1;border-radius:14px;color:#667066;display:flex;flex-direction:column;gap:8px}
 .quick-products{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid #d7e2d4;background:#fff;border-radius:999px;padding:7px 10px;cursor:pointer}
@@ -38,11 +35,13 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 
 .autocomplete-wrap{position:relative;width:100%}
 .autocomplete-wrap input{width:100%;box-sizing:border-box}
-.suggestions{position:absolute;z-index:10000;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #cfd9cf;border-radius:14px;box-shadow:0 12px 28px rgba(0,0,0,.16);overflow:hidden;max-height:300px;overflow-y:auto}
-.suggestion{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;background:#fff;color:#27332b;text-align:left;font:inherit;cursor:pointer}
-.suggestion:hover,.suggestion:focus{background:#f0f6ee}
-.suggestion small{color:#707970}
+
 .recipe-autocomplete-help{margin-top:7px;color:#687268;font-size:.92em}
+
+.suggestions{display:none;margin:8px 0 10px;padding:8px;background:#f3f7f1;border:1px solid #d9e4d6;border-radius:14px;flex-wrap:wrap;gap:8px}
+.suggestions.mobile-inline{display:flex}
+.suggestion{display:inline-flex;align-items:center;gap:5px;border:1px solid #cbdac7;background:#fff;border-radius:999px;padding:9px 12px;cursor:pointer;font:inherit;color:#24362a}
+.suggestion small{color:#687268;font-size:.82em}
 </style></head>
 <body>
 <header><h1>FamilienEssensPlaner</h1><p>Planen · Kochen · Sparen · Einkaufen 🌱</p></header>
@@ -61,7 +60,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <section id="recipes" class="view"><div class="card"><h2>🍲 Rezepte</h2><div class="grid"><div><label>Suche</label>
 <div class="autocomplete-wrap">
 <input id="recipeSearch" autocomplete="off" list="recipeSuggestionList" placeholder="z. B. Pasta, Curry, Burger …" oninput="fepRenderRecipeSuggestions()" onfocus="fepRenderRecipeSuggestions(true)">
-<div id="recipeSuggestions" class="suggestions" style="display:none"></div><datalist id="recipeSuggestionList"></datalist>
+<div id="recipeSuggestions" class="suggestions" style="display:none"></div>
 </div>
 <div class="recipe-autocomplete-help">🔎 <b>Ausfüllhilfe:</b> Tippe 1–2 Buchstaben ein – die Vorschläge erscheinen direkt unter dem Feld.</div>
 </div><div><label>Filter</label><select id="recipeFilter" onchange="renderRecipes()"><option>Alle</option><option>Vegetarisch</option><option>Schnell</option><option>Kinderfreundlich</option></select></div></div></div><div id="recipeGrid" class="recipe-grid"></div></section>
@@ -83,7 +82,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <section id="offers" class="view"><div class="card hero"><h2>🏆 Smart-Angebotsvergleich</h2><p class="muted">Die gespeicherte PLZ wird automatisch verwendet. Produkte, Einkaufsliste oder <b>alle Zutaten aus dem Wochenplan</b> können verglichen werden.</p><div class="grid"><div><label>PLZ / Ort</label><input id="offerZip"></div><div><label>Produkt oder Zutat</label>
 <div class="autocomplete-wrap">
 <input id="offerProduct" autocomplete="off" list="ingredientSuggestionList" placeholder="z. B. Milch, Nudeln, Tomaten …" oninput="fepRenderIngredientSuggestions()" onfocus="fepRenderIngredientSuggestions(true)">
-<div id="productSuggestions" class="suggestions" style="display:none"></div><datalist id="ingredientSuggestionList"></datalist>
+<div id="productSuggestions" class="suggestions" style="display:none"></div>
 </div>
 <div class="recipe-autocomplete-help">🔎 <b>Ausfüllhilfe:</b> Tippe 1–2 Buchstaben ein – die Vorschläge erscheinen direkt unter dem Feld.</div>
 </div></div><div class="actions"><button onclick="compareProduct()">🏆 Vergleich starten</button><button class="secondary" onclick="useProfileZip()">📍 Profil-PLZ verwenden</button><button class="secondary" onclick="compareList()">🛒 Einkaufsliste vergleichen</button><button class="secondary" onclick="show('sources')">🔌 Datenquellen</button></div><div id="offerMsg"></div></div><div id="offerResults"></div></section>
@@ -271,68 +270,68 @@ function fepRecipeMatches(q){
  if(!n) return RECIPES.slice(0,10);
  return RECIPES.filter(r=>fepNormalize(r.name).includes(n)).slice(0,10);
 }
-function fepRenderBox(box, items, type){
+function fepRenderBox(box, items, type, query){
  if(!box)return;
- box.innerHTML=items.length ? items.map(item=>{
+ const q=String(query||"").trim();
+ // Do not open a second large list while the iPhone keyboard is showing.
+ // The app suggestions are compact chips and start after two characters.
+ if(q.length<2){
+   box.innerHTML="";
+   box.style.display="none";
+   box.classList.remove("mobile-inline");
+   return;
+ }
+ const shown=items.slice(0,6);
+ box.innerHTML=shown.length ? shown.map(item=>{
    if(type==="recipe"){
-     return '<button type="button" class="suggestion" data-name="'+encodeURIComponent(item.name)+'"><span>🍲 <b>'+esc(item.name)+'</b></span><small>'+item.time+' Min.</small></button>';
+     return '<button type="button" class="suggestion" data-name="'+encodeURIComponent(item.name)+'">🍲 <b>'+esc(item.name)+'</b></button>';
    }
    const c=INGREDIENT_CATALOG[item]||{};
-   return '<button type="button" class="suggestion" data-name="'+encodeURIComponent(item)+'"><span>🛒 <b>'+esc(item)+'</b></span><small>'+(c.pack?('Packung '+formatQty(c.pack)+' '+esc(c.unit||"")):'Rezeptzutat')+'</small></button>';
- }).join("") : '<div class="suggestion"><span>Keine passenden Vorschläge gefunden.</span></div>';
- box.style.display="block";
- box.setAttribute("aria-expanded","true");
+   return '<button type="button" class="suggestion" data-name="'+encodeURIComponent(item)+'">🛒 <b>'+esc(item)+'</b>'+(c.pack?'<small>'+formatQty(c.pack)+' '+esc(c.unit||"")+'</small>':'')+'</button>';
+ }).join("") : '<span class="suggestion">Keine passenden Vorschläge</span>';
+ box.classList.add("mobile-inline");
+ box.style.display="flex";
  box.querySelectorAll("[data-name]").forEach(btn=>{
    btn.addEventListener("mousedown",e=>e.preventDefault());
    btn.addEventListener("click",()=>{
      const name=decodeURIComponent(btn.dataset.name);
      if(type==="recipe"){
-       recipeSearch.value=name;
-       renderRecipes();
+       const input=document.getElementById("recipeSearch");
+       if(input){input.value=name; renderRecipes();}
      }else{
-       offerProduct.value=name;
-       offerProduct.dispatchEvent(new Event("input",{bubbles:true}));
+       const input=document.getElementById("offerProduct");
+       if(input){
+         input.value=name;
+         input.dispatchEvent(new Event("input",{bubbles:true}));
+       }
      }
+     box.innerHTML="";
      box.style.display="none";
    });
  });
 }
-
-function fepFillDatalist(id,names){
- const dl=document.getElementById(id);
- if(!dl)return;
- dl.innerHTML=names.slice(0,20).map(n=>'<option value="'+esc(n)+'"></option>').join("");
-}
-function fepRenderRecipeSuggestions(showAll=false){
+function fepRenderRecipeSuggestions(){
  const input=document.getElementById("recipeSearch"), box=document.getElementById("recipeSuggestions");
- if(!input||!box)return;
- const items=fepRecipeMatches(input.value||"");
- fepFillDatalist("recipeSuggestionList",items.map(r=>r.name));
- fepRenderBox(box,items,"recipe");
+ if(input&&box) fepRenderBox(box,fepRecipeMatches(input.value||""),"recipe",input.value||"");
 }
-function fepRenderIngredientSuggestions(showAll=false){
+function fepRenderIngredientSuggestions(){
  const input=document.getElementById("offerProduct"), box=document.getElementById("productSuggestions");
- if(!input||!box)return;
- const items=fepIngredientMatches(input.value||"");
- fepFillDatalist("ingredientSuggestionList",items);
- fepRenderBox(box,items,"ingredient");
+ if(input&&box) fepRenderBox(box,fepIngredientMatches(input.value||""),"ingredient",input.value||"");
 }
 function fepSetupAutocomplete(){
  const rs=document.getElementById("recipeSearch"), rb=document.getElementById("recipeSuggestions");
  if(rs&&rb){
-   const update=()=>{
-     fepRenderBox(rb,fepRecipeMatches(rs.value),"recipe");
-   };
-   rs.addEventListener("input",update);
-   rs.addEventListener("focus",update);
-   rs.addEventListener("blur",()=>setTimeout(()=>rb.style.display="none",200));
+   rs.setAttribute("autocomplete","off");
+   rs.addEventListener("input",fepRenderRecipeSuggestions);
+   rs.addEventListener("focus",fepRenderRecipeSuggestions);
+   rs.addEventListener("blur",()=>setTimeout(()=>{rb.style.display="none";},250));
  }
  const os=document.getElementById("offerProduct"), ob=document.getElementById("productSuggestions");
  if(os&&ob){
-   const update=()=>fepRenderBox(ob,fepIngredientMatches(os.value),"ingredient");
-   os.addEventListener("input",update);
-   os.addEventListener("focus",update);
-   os.addEventListener("blur",()=>setTimeout(()=>ob.style.display="none",200));
+   os.setAttribute("autocomplete","off");
+   os.addEventListener("input",fepRenderIngredientSuggestions);
+   os.addEventListener("focus",fepRenderIngredientSuggestions);
+   os.addEventListener("blur",()=>setTimeout(()=>{ob.style.display="none";},250));
  }
 }
 function compareList(){
