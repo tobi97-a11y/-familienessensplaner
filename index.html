@@ -129,7 +129,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   });
 })();
 </script>
-<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div id="shopList"></div></div></section>
+<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div class="card"><div class="v54-controls"><button type="button" onclick="FEP_V54.render()">🏆 Einkauf optimieren</button><button type="button" onclick="FEP_V54.setBudget()">💰 Budget setzen</button><button type="button" onclick="FEP_V54.pantry()">🏠 Vorrat ergänzen</button></div><div id="v54Optimize"></div></div><div id="shopList"></div></div></section>
 </main>
 
 <nav><button data-v="home" onclick="show('home')"><span>🏠</span>Start</button><button data-v="week" onclick="show('week')"><span>📅</span>Woche</button><button data-v="recipes" onclick="show('recipes')"><span>🍲</span>Rezepte</button><button data-v="offers" onclick="show('offers')"><span>🏆</span>Angebote</button><button data-v="shopping" onclick="show('shopping')"><span>🧺</span>Einkauf</button></nav>
@@ -947,4 +947,52 @@ window.FEP_V52={
 .v52-best{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:16px;background:#eef7eb;margin:10px 0}.v52-best strong{font-size:1.3em}.v52-grid{display:grid;gap:8px}.v52-grid>div{display:flex;justify-content:space-between;padding:10px;border:1px solid #e2e8e0;border-radius:12px}.v52-item{padding:12px 0;border-bottom:1px solid #e5e9e4}.v52-item-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.v52-cheapest-price{white-space:nowrap;font-size:1.18em}.v52-cheapest-store{display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:6px 9px;border-radius:10px;background:#f4f8f1}.v52-cheapest-store .merchant{color:#24633a;font-size:.82em}.v52-cheapest-store .web{color:#8a6a00;font-size:.82em}.v52-prices{display:none}.v52-prices span{padding:7px;border:1px solid #e5e9e4;border-radius:9px;font-size:.92em}.v52-prices em{font-style:normal;font-size:.75em;margin-left:4px}.v52-prices .merchant{color:#24633a}.v52-prices .web{color:#8a6a00}
 </style>
 
+
+<script>
+/* V54 – direkt auf V53: Einkaufsoptimierung, Budget, Vorrat */
+window.FEP_V54={
+ state(){return typeof getState==="function"?getState():{}},
+ save(st){if(typeof put==="function")put(st);else if(typeof saveState==="function")saveState(st)},
+ shopping(){const st=this.state();return Array.isArray(st.shoppingList)?st.shoppingList:[]},
+ offers(name){
+  let o=[];try{const key=typeof findOfferKey==="function"?findOfferKey(name):name;o=(typeof OFFERS!=="undefined"&&OFFERS[key])||[]}catch(e){}
+  return o.map(x=>({store:x[0],price:Number(x[1])})).filter(x=>Number.isFinite(x.price)).sort((a,b)=>a.price-b.price);
+ },
+ calculate(){
+  const list=this.shopping().filter(x=>!x.owned), stores={}, rows=[];
+  list.forEach(x=>{
+   const offers=this.offers(x.name), best=offers[0]||null;
+   const cat=(typeof INGREDIENT_CATALOG!=="undefined"?INGREDIENT_CATALOG[x.name]:null)||{};
+   const pack=Number(cat.pack||0), qty=Number(x.qty||0), packs=pack?Math.max(1,Math.ceil(qty/pack)):1;
+   if(best)stores[best.store]=(stores[best.store]||0)+best.price*packs;
+   rows.push({name:x.name,qty,unit:x.unit,packs,best,total:best?best.price*packs:0});
+  });
+  const single=Object.entries(stores).sort((a,b)=>a[1]-b[1]);
+  const mixed=rows.reduce((n,r)=>n+r.total,0);
+  return {single,mixed,rows};
+ },
+ render(){
+  const el=document.getElementById("v54Optimize");if(!el)return;
+  const r=this.calculate(),best=r.single[0],st=this.state(),budget=Number(st.profile?.budget||0);
+  el.innerHTML='<h3>🏆 Einkauf optimieren</h3>'+
+   (best?'<div class="v54-best"><span>Günstigster Einzelmarkt</span><b>'+esc(best[0])+' · '+best[1].toFixed(2).replace(".",",")+' €</b></div>':'<p>Keine ausreichenden Preisangaben.</p>')+
+   '<div class="v54-best"><span>Gemischter Einkauf</span><b>'+r.mixed.toFixed(2).replace(".",",")+' €</b></div>'+
+   (budget?'<div class="small">'+(r.mixed<=budget?'🟢 '+(budget-r.mixed).toFixed(2).replace(".",",")+' € unter Budget':'🔴 '+(r.mixed-budget).toFixed(2).replace(".",",")+' € über Budget')+'</div>':'')+
+   '<h4>Preiswertester Markt je Artikel</h4><div class="v54-rows">'+r.rows.map(x=>'<div><span>'+esc(x.name)+'</span><b>'+(x.best?esc(x.best.store)+' · '+x.total.toFixed(2).replace(".",",")+' €':'⚠️ kein Preis')+'</b></div>').join("")+'</div>';
+ },
+ setBudget(){
+  const st=this.state(),v=prompt("Wochenbudget in Euro:",st.profile?.budget||"");
+  if(v===null)return;st.profile=st.profile||{};st.profile.budget=Math.max(0,Number(String(v).replace(",","."))||0);this.save(st);this.render();
+ },
+ pantry(){
+  const st=this.state(),v=prompt("Vorrat ergänzen (z.B. Reis 500 g):");if(!v)return;
+  st.pantry=Array.isArray(st.pantry)?st.pantry:[];st.pantry.push({name:v,added:new Date().toISOString()});this.save(st);
+ },
+ init(){this.render()}
+};
+document.addEventListener("DOMContentLoaded",()=>FEP_V54.init());
+</script>
+<style>
+.v54-best{display:flex;justify-content:space-between;gap:12px;padding:12px;margin:8px 0;border:1px solid #dfe7dc;border-radius:12px}.v54-rows{display:grid;gap:6px}.v54-rows>div{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}.v54-controls{display:flex;gap:8px;flex-wrap:wrap}.v54-controls button{min-height:44px}
+</style>
 </body></html>
