@@ -2,8 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#23382b"><meta name="apple-mobile-web-app-capable" content="yes">
-<title>FamilienEssensPlaner V67</title>
+<meta name="theme-color" content="#23382b"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="mobile-web-app-capable" content="yes"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes">
+<title>FamilienEssensPlaner – Familie, Planen & Einkaufen</title>
 <style>
 :root{--g:#23382b;--g2:#31533d;--p:#eef5ee;--line:#d7dfd7;--text:#26332b;--muted:#68736c;--gold:#b78919;--red:#a44b45;--white:#fff}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f5f7f4;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding-bottom:88px}
@@ -53,9 +53,9 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <div class="card"><h3>⚙️ Familienprofil</h3><div class="grid"><div><label>Personen</label><input id="quickPeople" type="number" min="1" value="3"></div><div><label>Wochenbudget (€)</label><input id="quickBudget" type="number" min="0" value="150"></div><div><label>PLZ / Ort</label><input id="quickZip" placeholder="z. B. 99817"></div><div><label>Lieblingsmarkt</label><select id="quickMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div></div><div class="actions"><button onclick="saveProfileFromHome()">💾 Speichern</button><button class="secondary" onclick="show('profile')">Profil öffnen</button></div></div>
 <div class="section-title"><h3>🚀 Schnellzugriff</h3></div><div class="quick"><button onclick="show('week')"><span>📅</span><b>Wochenplan</b><small>7 Tage planen</small></button><button onclick="show('recipes')"><span>🍲</span><b>Rezepte</b><small>Gerichte entdecken</small></button><button onclick="show('offers')"><span>🏆</span><b>Angebote</b><small>Preise vergleichen</small></button><button onclick="show('shopping')"><span>🧺</span><b>Einkauf</b><small>Liste abhaken</small></button></div>
 <div class="card"><h3>💶 Rezeptpreise</h3><p class="muted">Die Preise der einzelnen Zutaten dienen aktuell als Startwerte für die Budgetplanung. REWE weist selbst darauf hin, dass konkrete Preise vom Standort abhängen.</p></div><div class="card"><h3>💡 Familien-Tipp</h3><p class="muted">Plane zuerst 3–4 Gerichte mit gemeinsamen Zutaten. So wird die Einkaufsliste kleiner und das Budget besser eingehalten.</p></div>
-</section>
+<div class="card fep2-tools"><h3>✨ Mehr aus deiner Woche</h3><div class="quick"><button onclick="show('favorites')"><span>⭐</span><b>Favoriten</b><small>Lieblingsrezepte</small></button><button onclick="show('pantryView')"><span>📦</span><b>Vorrat</b><small>Was ist da?</small></button><button onclick="show('statsView')"><span>📊</span><b>Auswertung</b><small>Woche im Blick</small></button><button onclick="installFEP()"><span>📲</span><b>App installieren</b><small>Zum Home-Bildschirm</small></button></div></div></section>
 
-<section id="profile" class="view"><div class="card"><h2>👨‍👩‍👧 Familienprofil</h2><p class="muted">Alles wird auf diesem Gerät gespeichert.</p><div class="grid"><div><label>PLZ / Ort</label><input id="profileZip"></div><div><label>Personen</label><input id="profilePeople" type="number" min="1"></div><div><label>Wochenbudget (€)</label><input id="profileBudget" type="number" min="0"></div><div><label>Lieblingsmarkt</label><select id="profileMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div><div><label>Ernährung</label><select id="diet"><option>Alles</option><option>Vegetarisch</option><option>Vegan</option></select></div><div><label>Kochzeit</label><select id="cooktime"><option>Egal</option><option>max. 20 Minuten</option><option>max. 30 Minuten</option><option>max. 45 Minuten</option></select></div><div><label>Kinderfreundlich</label><select id="kidfriendly"><option value="egal">Egal</option><option value="ja">Bevorzugen</option><option value="nur">Nur kinderfreundliche</option></select></div></div><div class="actions"><button onclick="saveProfile()">Profil speichern</button><button class="secondary" onclick="show('offers')">Angebote vergleichen</button></div><div id="profileMsg"></div></div></section>
+<section id="profile" class="view"><div class="card"><h2>👨‍👩‍👧 Familienprofil</h2><p class="muted">Alles wird auf diesem Gerät gespeichert.</p><div class="grid"><div><label>PLZ / Ort</label><input id="profileZip"></div><div><label>Personen</label><input id="profilePeople" type="number" min="1"></div><div><label>Wochenbudget (€)</label><input id="profileBudget" type="number" min="0"></div><div><label>Lieblingsmarkt</label><select id="profileMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div><div><label>Ernährung</label><select id="diet"><option>Alles</option><option>Vegetarisch</option><option>Vegan</option></select></div><div><label>Kochzeit</label><select id="cooktime"><option>Egal</option><option>max. 20 Minuten</option><option>max. 30 Minuten</option><option>max. 45 Minuten</option></select></div><div><label>Kinderfreundlich</label><select id="kidfriendly"><option value="egal">Egal</option><option value="ja">Bevorzugen</option><option value="nur">Nur kinderfreundliche</option></select></div></div><div class="actions"><button onclick="saveProfile()">Profil speichern</button><button class="secondary" onclick="show('offers')">Angebote vergleichen</button><button class="secondary" onclick="show('aboutView')">ℹ️ Info & Datenschutz</button></div><div id="profileMsg"></div></div></section>
 
 <section id="recipes" class="view"><div class="card"><h2>🍲 Rezepte</h2><div class="grid"><div><label>Suche</label>
 <div class="autocomplete-wrap">
@@ -132,6 +132,10 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" type="button" onclick="FEP_V63.mergeWeekToShopping()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" type="button" onclick="FEP_V63.clearDone()">☑ Erledigte entfernen</button><button class="secondary" type="button" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" type="button" onclick="FEP_V63.clearAll()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt. Eigene Artikel kannst du jederzeit ergänzen, als „vorhanden“ markieren oder abhaken.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div class="card"><div class="v54-controls"><button type="button" onclick="FEP_V54.render()">🏆 Einkauf optimieren</button><button type="button" onclick="FEP_V54.setBudget()">💰 Budget setzen</button><button type="button" onclick="FEP_V54.pantry()">🏠 Vorrat ergänzen</button></div><div id="v54Optimize"></div></div><div id="shopList"></div></div></section>
 </main>
 
+<section id="favorites" class="view"><div class="card"><h2>⭐ Meine Favoriten</h2><p class="muted">Deine gespeicherten Lieblingsrezepte.</p><div id="favoriteGrid" class="recipe-grid"></div><div id="favoriteEmpty" class="notice" style="display:none">Noch keine Favoriten. Tippe bei einem Rezept auf ♡.</div></div></section>
+<section id="pantryView" class="view"><div class="card"><h2>📦 Mein Vorrat</h2><p class="muted">Artikel im Vorrat werden beim Einkauf berücksichtigt.</p><div class="actions"><input id="pantryName" placeholder="z. B. Reis"><input id="pantryQty" type="number" min="0" step="0.1" placeholder="Menge"><input id="pantryUnit" placeholder="g / ml / Stück"><button onclick="fepAddPantry()">+ Hinzufügen</button></div><div id="pantryList"></div></div><div class="card"><h3>🛒 Einkauf aus Vorrat bereinigen</h3><p class="muted">Beim Übernehmen des Wochenplans werden bekannte Vorratsartikel automatisch abgezogen.</p><button onclick="fepUsePantryForShopping()">Vorrat jetzt berücksichtigen</button></div></section>
+<section id="statsView" class="view"><div class="card"><h2>📊 Wochen-Auswertung</h2><div id="statsGrid" class="stats"></div><div id="statsText" class="notice"></div></div></section>
+<section id="aboutView" class="view"><div class="card"><h2>ℹ️ FamilienEssensPlaner</h2><p class="muted">Eine mobile Web-App für Familienplanung, Rezepte, Einkauf und Preisvergleich.</p><h3>Datenschutz</h3><p class="small">Profil, Wochenplan, Favoriten, Vorrat und Einkaufsliste werden standardmäßig lokal auf deinem Gerät gespeichert. Es werden von der statischen App keine persönlichen Daten an einen eigenen Server übertragen.</p><h3>Impressum</h3><p class="small">Bitte vor einer öffentlichen Veröffentlichung die gesetzlich erforderlichen Anbieterangaben ergänzen.</p></div></section>
 <nav><button data-v="home" onclick="show('home')"><span>🏠</span>Start</button><button data-v="week" onclick="show('week')"><span>📅</span>Woche</button><button data-v="recipes" onclick="show('recipes')"><span>🍲</span>Rezepte</button><button data-v="offers" onclick="show('offers')"><span>🏆</span>Angebote</button><button data-v="shopping" onclick="show('shopping')"><span>🧺</span>Einkauf</button></nav>
 
 <div id="modal" class="modal" onclick="if(event.target.id==='modal')closeModal()"><div class="sheet"><div id="modalBody"></div><div class="actions"><button class="secondary" onclick="closeModal()">Schließen</button></div></div></div>
@@ -209,15 +213,45 @@ function closeModal(){modal.classList.remove("open")}
 function ingredientCost(r){return r.ing.reduce((sum,x)=>sum+(INGREDIENT_PRICES[x]||0),0)}
 function addRecipe(id){const r=RECIPES.find(x=>x.id===id),s=getState();r.ing.forEach(x=>{const y=s.shopping.find(i=>i.name===x);if(y)y.qty++;else s.shopping.push({name:x,qty:1,done:false})});put(s);alert("Zutaten wurden hinzugefügt.")}
 function generateWeek(){
- const s=getState();
- const pool=RECIPES.filter(r=>{
-   const d=s.profile.diet||"Alles";
-   if(d==="Vegetarisch"&&!r.veg)return false;
-   if(d==="Vegan"&&!r.veg)return false;
+ const s=getState(), p=s.profile||{};
+ const diet=p.diet||"Alles", maxTime=p.cooktime||"Egal", kid=p.kidfriendly||"egal";
+ let pool=RECIPES.filter(r=>{
+   if(diet==="Vegetarisch" && !r.veg)return false;
+   if(diet==="Vegan" && !r.veg)return false;
+   if(maxTime!=="Egal" && Number(r.time)>Number(maxTime))return false;
+   if(kid==="nur" && !r.kid)return false;
    return true;
  });
- s.week=DAYS.map((day,i)=>({day,recipeId:pool[i%pool.length].id}));
- s.weekMode="auto"; put(s); renderWeek();
+ // If strict filters leave too few recipes, relax only the least important filters so planning never breaks.
+ if(pool.length<7){
+   pool=RECIPES.filter(r=>{
+     if(diet==="Vegetarisch" && !r.veg)return false;
+     if(diet==="Vegan" && !r.veg)return false;
+     return maxTime==="Egal" || Number(r.time)<=Number(maxTime)+15;
+   });
+ }
+ if(pool.length<7) pool=RECIPES.filter(r=>(diet==="Alles"||r.veg||diet!=="Vegetarisch") && (diet!=="Vegan"||r.veg));
+ if(!pool.length) pool=RECIPES.slice();
+ const recent=Array.isArray(s.autoHistory)?s.autoHistory:[];
+ const fresh=pool.filter(r=>!recent.includes(r.id));
+ let candidates=(fresh.length>=7?fresh:pool).slice();
+ // Fisher-Yates shuffle for genuinely different plans.
+ for(let i=candidates.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]]}
+ // Prefer a child-friendly mix when requested.
+ if(kid==="bevorzugen") candidates.sort((a,b)=>(b.kid?1:0)-(a.kid?1:0));
+ let chosen=candidates.slice(0,7);
+ // Avoid duplicates even when the available pool is small.
+ if(chosen.length<7) chosen=chosen.concat(pool.filter(r=>!chosen.some(x=>x.id===r.id)).slice(0,7-chosen.length));
+ const weeklyCost=chosen.reduce((sum,r)=>sum+(Number(r.cost)||0),0);
+ s.week=DAYS.map((day,i)=>({day,recipeId:chosen[i%chosen.length].id}));
+ s.weekMode="auto";
+ s.autoHistory=chosen.map(r=>r.id).concat(recent).filter((v,i,a)=>a.indexOf(v)===i).slice(0,21);
+ put(s); renderWeek();
+ const n=document.getElementById('autoPlanNotice');
+ if(n){
+   n.style.display='block';
+   n.innerHTML='✨ Neue Woche geplant – '+chosen.length+' verschiedene Rezepte.'+(p.budget&&weeklyCost>p.budget?' ⚠️ Das Rezeptbudget wird voraussichtlich überschritten.':'');
+ }
 }
 function startManualWeek(){
  const s=getState(); s.weekMode="manual";
@@ -253,7 +287,24 @@ function renderWeek(){
  }).join("")+(s.week.some(d=>!d.recipeId)?'<div class="notice">ℹ️ Einige Tage sind noch offen. Du kannst sie selbst auswählen oder mit „Automatisch planen“ füllen.</div>':'');
  renderManualPicker();
 }
-function addWeekToShop(){const s=getState();if(!s.week.length){generateWeek()}s=getState();s.week.forEach(d=>{const r=RECIPES.find(x=>x.id===d.recipeId);r.ing.forEach(x=>{const y=s.shopping.find(i=>i.name===x);if(y)y.qty++;else s.shopping.push({name:x,qty:1,done:false})})});put(s);show("shopping")}
+function addWeekToShop(){
+ const s=getState();
+ if(!s.week.length){generateWeek()}
+ const state=getState(), people=Math.max(1,Number(state.profile?.people)||1);
+ (state.week||[]).forEach(d=>{
+   const r=RECIPES.find(x=>x.id===d.recipeId), det=r&&RECIPE_DETAILS[r.name];
+   if(!r)return;
+   const ingredients=(det&&Array.isArray(det.ingredients))?det.ingredients:r.ing.map(x=>[x,1,"Stück"]);
+   ingredients.forEach(([name,qty,unit])=>{
+     const baseServings=Math.max(1,Number(det?.servings)||4), amount=(Number(qty)||0)*people/baseServings;
+     const key=String(name).trim().toLowerCase();
+     const y=state.shopping.find(i=>String(i.name).trim().toLowerCase()===key);
+     if(y){y.qty=(Number(y.qty)||0)+amount;y.unit=y.unit||unit;}
+     else state.shopping.push({name:String(name),qty:amount,unit:unit||"Stück",done:false,owned:false});
+   });
+ });
+ put(state); show("shopping");
+}
 function addShop(){const v=newShop.value.trim();if(!v)return;const s=getState();s.shopping.push({name:v,qty:1,done:false});put(s);newShop.value="";renderShopping()}
 function toggleShop(i){const s=getState();s.shopping[i].done=!s.shopping[i].done;put(s);renderShopping()}
 function delShop(i){const s=getState();s.shopping.splice(i,1);put(s);renderShopping()}
@@ -1087,6 +1138,37 @@ document.addEventListener("DOMContentLoaded",()=>FEP_V54.init());
  document.addEventListener('DOMContentLoaded',()=>{const p=getState().profile||{};const k=document.getElementById('kidfriendly');if(k)k.value=p.kidfriendly||'egal';});
 })();
 </script>
+<script>
+/* V68+ – Favoriten, Vorrat, Auswertung, PWA und Release-Polish */
+(function(){
+  function state(){ return getState(); }
+  function save(s){ put(s); }
+  window.toggleFav=function(id){ const s=state(); s.fav=Array.isArray(s.fav)?s.fav:[]; const n=Number(id); s.fav=s.fav.includes(n)?s.fav.filter(x=>x!==n):s.fav.concat(n); save(s); if(document.getElementById('recipes')?.classList.contains('active')) renderRecipes(); renderFavorites(); };
+  window.renderFavorites=function(){ const box=document.getElementById('favoriteGrid'), empty=document.getElementById('favoriteEmpty'); if(!box)return; const s=state(), ids=Array.isArray(s.fav)?s.fav:[], a=ids.map(id=>RECIPES.find(r=>r.id===id)).filter(Boolean); empty.style.display=a.length?'none':'block'; box.innerHTML=a.map(r=>'<article class="card recipe"><img loading="lazy" src="'+r.img+'" alt="'+esc(r.name)+'"><div class="recipe-body"><button class="fav" onclick="toggleFav('+r.id+')">♥</button><h3>'+esc(r.name)+'</h3><span class="tag">⏱ '+r.time+' Min.</span>'+(r.veg?'<span class="tag">🌱 Veggie</span>':'')+'<div class="actions"><button onclick="openRecipe('+r.id+')">👨‍🍳 Rezept</button></div></div></article>').join(''); };
+  window.fepAddPantry=function(){ const n=(document.getElementById('pantryName').value||'').trim(); if(!n)return; const q=Number(document.getElementById('pantryQty').value)||0,u=(document.getElementById('pantryUnit').value||'').trim(); const s=state(); s.pantry=Array.isArray(s.pantry)?s.pantry:[]; const key=n.toLowerCase(); const hit=s.pantry.find(x=>String(x.name).toLowerCase()===key); if(hit){hit.qty=(Number(hit.qty)||0)+q;hit.unit=hit.unit||u;}else s.pantry.push({name:n,qty:q,unit:u}); save(s); document.getElementById('pantryName').value='';document.getElementById('pantryQty').value='';document.getElementById('pantryUnit').value=''; renderPantry(); };
+  window.fepDelPantry=function(i){const s=state();s.pantry.splice(i,1);save(s);renderPantry();};
+  window.renderPantry=function(){const box=document.getElementById('pantryList');if(!box)return;const a=Array.isArray(state().pantry)?state().pantry:[];box.innerHTML=a.length?a.map((x,i)=>'<div class="shop-item"><div><b>'+esc(x.name)+'</b><div class="small">'+(x.qty||0)+' '+esc(x.unit||'')+'</div></div><button class="danger" onclick="fepDelPantry('+i+')">×</button></div>').join(''):'<p class="muted">Dein Vorrat ist leer.</p>';};
+  window.fepUsePantryForShopping=function(){ const s=state(); s.shopping=(s.shopping||[]).map(x=>({...x})); const pantry=s.pantry||[]; s.shopping=s.shopping.filter(item=>{const p=pantry.find(x=>String(x.name).trim().toLowerCase()===String(item.name).trim().toLowerCase()); if(!p)return true; const iq=Number(item.qty)||0,pq=Number(p.qty)||0;if(pq>=iq){p.qty=pq-iq;return false;}item.qty=iq-pq;p.qty=0;return true;}); save(s); renderPantry(); renderShopping(); alert('Vorrat wurde bei der Einkaufsliste berücksichtigt.'); };
+  window.renderStats=function(){
+    const s=state(), w=(s.week||[]).filter(x=>x.recipeId), rs=w.map(x=>RECIPES.find(r=>r.id===x.recipeId)).filter(Boolean);
+    const people=Number(s.profile?.people)||1, cost=rs.reduce((a,r)=>a+ingredientCost(r),0), veg=rs.filter(r=>r.veg).length;
+    const avg=rs.length?Math.round(rs.reduce((a,r)=>a+Number(r.time||0),0)/rs.length):0, items=(s.shopping||[]).filter(x=>!x.done).length;
+    const g=document.getElementById('statsGrid'); if(!g)return;
+    g.innerHTML='<div class="stat">🍽️<small>Gerichte</small><b>'+rs.length+'</b></div><div class="stat">💶<small>Plan-Kosten</small><b>'+cost.toFixed(2).replace('.',',')+' €</b></div><div class="stat">⏱️<small>Ø Kochzeit</small><b>'+avg+' Min.</b></div><div class="stat">🌱<small>Veggie</small><b>'+veg+'</b></div>';
+    let budgetText='';
+    if(s.profile?.budget){ const b=Number(s.profile.budget); budgetText=cost<=b?'🟢 Du liegst etwa '+(b-cost).toFixed(2).replace('.',',')+' € unter dem Rezept-Budget.':'🔴 Die Rezept-Schätzung liegt etwa '+(cost-b).toFixed(2).replace('.',',')+' € über dem Budget.'; }
+    document.getElementById('statsText').innerHTML=rs.length?'Für '+people+' '+(people===1?'Person':'Personen')+' sind '+rs.length+' Gerichte geplant. '+budgetText+'<br>🛒 Offene Einkaufsartikel: '+items:'Noch kein Wochenplan vorhanden.';
+  };
+  let deferredPrompt=null; window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;}); window.installFEP=async function(){if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;}else alert('Auf dem iPhone: Teilen → Zum Home-Bildschirm.');};
+  const oldShow=window.show; window.show=function(id){oldShow(id);if(id==='favorites')renderFavorites();if(id==='pantryView')renderPantry();if(id==='statsView')renderStats();};
+  const oldUpdate=window.updateHome; window.updateHome=function(){oldUpdate();renderFavorites();renderPantry();renderStats();};
+  document.addEventListener('DOMContentLoaded',()=>{renderFavorites();renderPantry();renderStats(); if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});});
+})();
+</script>
+<style>
+.fep2-tools .quick button{min-height:110px}.recipe-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.recipe-grid .card{margin:0}.recipe-grid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px}.shop-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:13px 0}.danger{color:var(--red)}
+@media(max-width:620px){.recipe-grid{grid-template-columns:1fr}.fep2-tools .quick{grid-template-columns:repeat(2,1fr)}.fep2-tools .quick button{min-height:95px}}
+</style>
 </body></html><script>
 /* V63 – Einkaufsliste komplett überarbeitet
    Ein gemeinsamer, persistenter Warenkorb für Wochenplan + eigene Artikel.
