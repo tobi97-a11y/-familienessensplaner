@@ -55,7 +55,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <div class="card"><h3>💶 Rezeptpreise</h3><p class="muted">Die Preise der einzelnen Zutaten dienen aktuell als Startwerte für die Budgetplanung. REWE weist selbst darauf hin, dass konkrete Preise vom Standort abhängen.</p></div><div class="card"><h3>💡 Familien-Tipp</h3><p class="muted">Plane zuerst 3–4 Gerichte mit gemeinsamen Zutaten. So wird die Einkaufsliste kleiner und das Budget besser eingehalten.</p></div>
 </section>
 
-<section id="profile" class="view"><div class="card"><h2>👨‍👩‍👧 Familienprofil</h2><p class="muted">Alles wird auf diesem Gerät gespeichert.</p><div class="grid"><div><label>PLZ / Ort</label><input id="profileZip"></div><div><label>Personen</label><input id="profilePeople" type="number" min="1"></div><div><label>Wochenbudget (€)</label><input id="profileBudget" type="number" min="0"></div><div><label>Lieblingsmarkt</label><select id="profileMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div><div><label>Ernährung</label><select id="diet"><option>Alles</option><option>Vegetarisch</option><option>Vegan</option></select></div><div><label>Kochzeit</label><select id="cooktime"><option>Egal</option><option>max. 20 Minuten</option><option>max. 30 Minuten</option><option>max. 45 Minuten</option></select></div></div><div class="actions"><button onclick="saveProfile()">Profil speichern</button><button class="secondary" onclick="show('offers')">Angebote vergleichen</button></div><div id="profileMsg"></div></div></section>
+<section id="profile" class="view"><div class="card"><h2>👨‍👩‍👧 Familienprofil</h2><p class="muted">Alles wird auf diesem Gerät gespeichert.</p><div class="grid"><div><label>PLZ / Ort</label><input id="profileZip"></div><div><label>Personen</label><input id="profilePeople" type="number" min="1"></div><div><label>Wochenbudget (€)</label><input id="profileBudget" type="number" min="0"></div><div><label>Lieblingsmarkt</label><select id="profileMarket"><option>Denns BioMarkt</option><option>REWE</option><option>Lidl</option><option>ALDI SÜD</option><option>Kaufland</option><option>EDEKA</option></select></div><div><label>Ernährung</label><select id="diet"><option>Alles</option><option>Vegetarisch</option><option>Vegan</option></select></div><div><label>Kochzeit</label><select id="cooktime"><option>Egal</option><option>max. 20 Minuten</option><option>max. 30 Minuten</option><option>max. 45 Minuten</option></select></div><div><label>Kinderfreundlich</label><select id="kidfriendly"><option value="egal">Egal</option><option value="ja">Bevorzugen</option><option value="nur">Nur kinderfreundliche</option></select></div></div><div class="actions"><button onclick="saveProfile()">Profil speichern</button><button class="secondary" onclick="show('offers')">Angebote vergleichen</button></div><div id="profileMsg"></div></div></section>
 
 <section id="recipes" class="view"><div class="card"><h2>🍲 Rezepte</h2><div class="grid"><div><label>Suche</label>
 <div class="autocomplete-wrap">
@@ -159,8 +159,8 @@ const STORE_KEY="FEP_V27";
 function getState(){return JSON.parse(localStorage.getItem(STORE_KEY)||'{"profile":{"zip":"","people":3,"budget":150,"market":"Denns BioMarkt","diet":"Alles","cooktime":"Egal"},"shopping":[],"week":[]}')}
 function put(s){localStorage.setItem(STORE_KEY,JSON.stringify(s));updateHome()}
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===id));window.scrollTo({top:0,behavior:"smooth"});if(id==="recipes")renderRecipes();if(id==="shopping")renderShopping();if(id==="week")renderWeek();if(id==="offers")loadOfferZip()}
-function loadProfileFields(){const p=getState().profile;profileZip.value=p.zip;profilePeople.value=p.people;profileBudget.value=p.budget;profileMarket.value=p.market;diet.value=p.diet;cooktime.value=p.cooktime;quickZip.value=p.zip;quickPeople.value=p.people;quickBudget.value=p.budget;quickMarket.value=p.market}
-function saveProfile(){const s=getState();s.profile={zip:profileZip.value.trim(),people:+profilePeople.value||1,budget:+profileBudget.value||0,market:profileMarket.value,diet:diet.value,cooktime:cooktime.value};put(s);profileMsg.innerHTML='<div class="notice ok">✅ Profil gespeichert. Die PLZ wird automatisch im Angebotsvergleich verwendet.</div>'}
+function loadProfileFields(){const p=getState().profile;profileZip.value=p.zip;profilePeople.value=p.people;profileBudget.value=p.budget;profileMarket.value=p.market;diet.value=p.diet;cooktime.value=p.cooktime;if(document.getElementById('kidfriendly'))document.getElementById('kidfriendly').value=p.kidfriendly||'egal';quickZip.value=p.zip;quickPeople.value=p.people;quickBudget.value=p.budget;quickMarket.value=p.market}
+function saveProfile(){const s=getState();s.profile={zip:profileZip.value.trim(),people:+profilePeople.value||1,budget:+profileBudget.value||0,market:profileMarket.value,diet:diet.value,cooktime:cooktime.value,kidfriendly:(document.getElementById('kidfriendly')?.value||'egal')};put(s);profileMsg.innerHTML='<div class="notice ok">✅ Profil gespeichert. Die PLZ wird automatisch im Angebotsvergleich verwendet.</div>'}
 function saveProfileFromHome(){const s=getState();s.profile={...s.profile,zip:quickZip.value.trim(),people:+quickPeople.value||1,budget:+quickBudget.value||0,market:quickMarket.value};put(s);alert("Profil gespeichert.")}
 function updateHome(){const s=getState(),p=s.profile;document.getElementById("sPeople").textContent=p.people+" Personen";document.getElementById("sBudget").textContent=p.budget.toFixed(0)+" €";document.getElementById("sItems").textContent=s.shopping.length;document.getElementById("sSave").textContent="0 €";quickZip.value=p.zip;quickPeople.value=p.people;quickBudget.value=p.budget;quickMarket.value=p.market}
 function useProfileZip(){const z=getState().profile.zip;if(!z){alert("Bitte zuerst im Familienprofil eine PLZ oder einen Ort speichern.");show("profile");return}offerZip.value=z;compareProduct()}
@@ -1037,6 +1037,56 @@ document.addEventListener("DOMContentLoaded",()=>FEP_V54.init());
 <style>
 .v54-best{display:flex;justify-content:space-between;gap:12px;padding:12px;margin:8px 0;border:1px solid #dfe7dc;border-radius:12px}.v54-rows{display:grid;gap:6px}.v54-rows>div{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}.v54-controls{display:flex;gap:8px;flex-wrap:wrap}.v54-controls button{min-height:44px}
 </style>
+
+<style>.v66-profile-note{margin-top:10px}</style>
+<script>
+/* V66: Familienprofil steuert die automatische Planung. */
+(function(){
+ const animal=/(hackfleisch|hähnchen|huhn|rind|schwein|fleisch|wurst|lachs|fisch|garnelen|thunfisch|milch|sahne|butter|käse|feta|parmesan|mozzarella|joghurt|quark|ei|eier|honig)/i;
+ const isVegan=r=>!r.ing.some(x=>animal.test(x));
+ const maxMin=v=>{const m=String(v||'').match(/(\d+)/);return m?Number(m[1]):Infinity};
+ const familyCost=(r,p)=>(Number(r.cost||0)*Math.max(1,Number(p)||1))/4;
+ function build(){
+   const s=getState(),p=s.profile||{},people=Math.max(1,Number(p.people)||1),budget=Math.max(0,Number(p.budget)||0);
+   const max=maxMin(p.cooktime);
+   let pool=RECIPES.filter(r=>{
+     if(p.diet==='Vegetarisch'&&!r.veg)return false;
+     if(p.diet==='Vegan'&&!isVegan(r))return false;
+     if(Number.isFinite(max)&&r.time>max+10)return false;
+     if(p.kidfriendly==='nur'&&!r.kid)return false;
+     return true;
+   });
+   if(pool.length<7) pool=RECIPES.filter(r=>p.diet==='Vegan'?isVegan(r):p.diet==='Vegetarisch'?r.veg:true);
+   const history=Array.isArray(s.autoRecipeHistory)?s.autoRecipeHistory.map(Number):[];
+   const used=new Set(),chosen=[];let total=0;
+   const score=r=>{
+     let v=Math.random()*20;
+     if(Number.isFinite(max))v+=r.time<=max?20:-(r.time-max)*3;
+     if(p.kidfriendly==='nur')v+=r.kid?30:-100;
+     if(p.kidfriendly==='ja')v+=r.kid?20:0;
+     if(history.slice(-21).includes(Number(r.id)))v-=30;
+     if(used.has(Number(r.id)))v-=1000;
+     if(budget&&total+familyCost(r,people)<=budget)v+=18;
+     return v;
+   };
+   for(let day=0;day<7;day++){
+     const candidates=pool.filter(r=>!used.has(Number(r.id))).sort((a,b)=>score(b)-score(a));
+     if(!candidates.length)break;
+     const top=candidates.slice(0,Math.min(10,candidates.length));
+     const r=top[Math.floor(Math.random()*top.length)];used.add(Number(r.id));chosen.push(r);total+=familyCost(r,people);
+   }
+   return {chosen,total,people,budget};
+ }
+ window.generateWeek=function(){
+   const s=getState(),x=build();
+   s.week=DAYS.map((day,i)=>({day,recipeId:x.chosen[i]?x.chosen[i].id:null}));s.weekMode='auto';
+   s.autoRecipeHistory=(Array.isArray(s.autoRecipeHistory)?s.autoRecipeHistory:[]).concat(x.chosen.map(r=>Number(r.id))).slice(-42);s.autoLastGenerated=new Date().toISOString();put(s);renderWeek();
+   const note=document.getElementById('autoPlanNotice');if(note){const p=s.profile||{};let msg='✨ Neuer Plan – Profil berücksichtigt';if(p.diet&&p.diet!=='Alles')msg+=' · '+p.diet;if(p.cooktime&&p.cooktime!=='Egal')msg+=' · '+p.cooktime;if(p.kidfriendly&&p.kidfriendly!=='egal')msg+=' · kinderfreundlich';msg+=' · '+x.people+' Personen';if(x.budget){msg+=' · ca. '+x.total.toFixed(2).replace('.',',')+' €';msg+=x.total<=x.budget?' ✓ im Budget':' ⚠ über Budget'}note.style.display='block';note.textContent=msg;}
+ };
+ const oldSave=window.saveProfile;window.saveProfile=function(){if(typeof oldSave==='function')oldSave();const s=getState();s.profile.kidfriendly=document.getElementById('kidfriendly')?.value||'egal';put(s);const m=document.getElementById('profileMsg');if(m)m.innerHTML='<div class="notice ok">✅ Profil gespeichert. Die automatische Planung berücksichtigt jetzt Personen, Budget, Ernährung, Kochzeit und Kinderfreundlichkeit.</div>';};
+ document.addEventListener('DOMContentLoaded',()=>{const p=getState().profile||{};const k=document.getElementById('kidfriendly');if(k)k.value=p.kidfriendly||'egal';});
+})();
+</script>
 </body></html><script>
 /* V63 – Einkaufsliste komplett überarbeitet
    Ein gemeinsamer, persistenter Warenkorb für Wochenplan + eigene Artikel.
