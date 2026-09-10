@@ -129,7 +129,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   });
 })();
 </script>
-<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" onclick="addWeekToShop()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" onclick="clearShop()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt und können anschließend im Preisvergleich geprüft werden.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div class="card"><div class="v54-controls"><button type="button" onclick="FEP_V54.render()">🏆 Einkauf optimieren</button><button type="button" onclick="FEP_V54.setBudget()">💰 Budget setzen</button><button type="button" onclick="FEP_V54.pantry()">🏠 Vorrat ergänzen</button></div><div id="v54Optimize"></div></div><div id="shopList"></div></div></section>
+<section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" type="button" onclick="FEP_V63.mergeWeekToShopping()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" type="button" onclick="FEP_V63.clearDone()">☑ Erledigte entfernen</button><button class="secondary" type="button" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" type="button" onclick="FEP_V63.clearAll()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt. Eigene Artikel kannst du jederzeit ergänzen, als „vorhanden“ markieren oder abhaken.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div class="card"><div class="v54-controls"><button type="button" onclick="FEP_V54.render()">🏆 Einkauf optimieren</button><button type="button" onclick="FEP_V54.setBudget()">💰 Budget setzen</button><button type="button" onclick="FEP_V54.pantry()">🏠 Vorrat ergänzen</button></div><div id="v54Optimize"></div></div><div id="shopList"></div></div></section>
 </main>
 
 <nav><button data-v="home" onclick="show('home')"><span>🏠</span>Start</button><button data-v="week" onclick="show('week')"><span>📅</span>Woche</button><button data-v="recipes" onclick="show('recipes')"><span>🍲</span>Rezepte</button><button data-v="offers" onclick="show('offers')"><span>🏆</span>Angebote</button><button data-v="shopping" onclick="show('shopping')"><span>🧺</span>Einkauf</button></nav>
@@ -985,4 +985,80 @@ document.addEventListener("DOMContentLoaded",()=>FEP_V54.init());
 <style>
 .v54-best{display:flex;justify-content:space-between;gap:12px;padding:12px;margin:8px 0;border:1px solid #dfe7dc;border-radius:12px}.v54-rows{display:grid;gap:6px}.v54-rows>div{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}.v54-controls{display:flex;gap:8px;flex-wrap:wrap}.v54-controls button{min-height:44px}
 </style>
-</body></html>
+</body></html><script>
+/* V63 – Einkaufsliste komplett überarbeitet
+   Ein gemeinsamer, persistenter Warenkorb für Wochenplan + eigene Artikel.
+   Mengen werden nach Zutat und Einheit zusammengeführt; „vorhanden“ wird beim
+   Preisvergleich und bei offenen Artikeln berücksichtigt. */
+window.FEP_V63={
+  key:'shoppingList',
+  state(){
+    const s=typeof getState==='function'?getState():{};
+    if(!Array.isArray(s[this.key])){
+      const legacy=Array.isArray(s.shopping)?s.shopping:[];
+      s[this.key]=legacy.map(x=>({name:x.name||'',qty:Number(x.qty||1),unit:x.unit||'',checked:!!x.done,owned:!!x.owned,manual:true})).filter(x=>x.name);
+      if(typeof put==='function')put(s); else localStorage.setItem('FEP_V27',JSON.stringify(s));
+    }
+    return s;
+  },
+  norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();},
+  save(s){s.shopping=s[this.key].map(x=>({name:x.name,qty:x.qty,unit:x.unit,done:!!x.checked,owned:!!x.owned})); if(typeof put==='function')put(s); else localStorage.setItem('FEP_V27',JSON.stringify(s));},
+  parseInput(v){
+    v=String(v||'').trim(); if(!v)return null;
+    let name=v,qty=1,unit='Stück';
+    let m=v.match(/^([0-9]+(?:[.,][0-9]+)?)\s*(kg|g|l|ml|stk\.?|stück|st\.?|dose(?:n)?|pack(?:ung)?(?:en)?)\s+(.+)$/i);
+    if(m){qty=parseFloat(m[1].replace(',','.'));unit=m[2].toLowerCase();name=m[3].trim();}
+    else {m=v.match(/^(.+?)\s+([0-9]+(?:[.,][0-9]+)?)\s*(kg|g|l|ml|stk\.?|stück|dose(?:n)?|pack(?:ung)?(?:en)?)$/i);if(m){name=m[1].trim();qty=parseFloat(m[2].replace(',','.'));unit=m[3].toLowerCase();}}
+    const units={'kg':'kg','g':'g','l':'l','ml':'ml','stk':'Stück','stk.':'Stück','st':'Stück','st.':'Stück','stück':'Stück','dosen':'Dose','dose':'Dose','pack':'Packung','packung':'Packung','packungen':'Packung'};
+    unit=units[unit]||unit;
+    return {name,qty:Number.isFinite(qty)?qty:1,unit};
+  },
+  add(item,opts={}){
+    if(!item||!item.name)return;
+    const s=this.state(),list=s[this.key], n=this.norm(item.name),u=this.norm(item.unit||'');
+    const row=list.find(x=>this.norm(x.name)===n && this.norm(x.unit||'')===u && !x.checked && !x.owned);
+    if(row)row.qty=Number(row.qty||0)+Number(item.qty||1);
+    else list.push({name:item.name,qty:Number(item.qty||1),unit:item.unit||'Stück',checked:false,owned:false,manual:!!opts.manual});
+    this.save(s);this.render();
+  },
+  addManual(){const input=document.getElementById('newShop');const item=this.parseInput(input?.value);if(!item)return;this.add(item,{manual:true});input.value='';input.focus();},
+  selectedRecipes(){const s=this.state(),list=Array.isArray(window.RECIPES)?window.RECIPES:[];return (s.week||[]).map(d=>list.find(r=>String(r.id)===String(d.recipeId))).filter(Boolean);},
+  mergeWeekToShopping(){
+    const s=this.state(),people=Number(s.profile?.people||3),items=[];
+    this.selectedRecipes().forEach(r=>{let ing=[];try{ing=scaledIngredients(r,people)||[]}catch(e){};ing.forEach(i=>items.push({name:i.name,qty:Number(i.qty||1),unit:i.unit||'Stück'}));});
+    const grouped=new Map(); items.forEach(i=>{const k=this.norm(i.name)+'|'+this.norm(i.unit);if(!grouped.has(k))grouped.set(k,{...i});else grouped.get(k).qty+=Number(i.qty||0);});
+    [...grouped.values()].forEach(i=>{const existing=s[this.key].find(x=>this.norm(x.name)===this.norm(i.name)&&this.norm(x.unit||'')===this.norm(i.unit||'')&&!x.checked&&!x.owned);if(existing)existing.qty=Number(existing.qty||0)+Number(i.qty||0);else s[this.key].push({...i,checked:false,owned:false,manual:false});});
+    this.save(s);this.render();const msg=document.getElementById('v45TransferStatus');if(msg){msg.textContent='✅ '+items.length+' Zutaten aus '+this.selectedRecipes().length+' Rezept(en) übernommen und zusammengeführt.';msg.style.display='block';}document.getElementById('shopList')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },
+  toggle(index,field){const s=this.state(),x=s[this.key][index];if(!x)return;x[field]=!x[field];this.save(s);this.render();},
+  remove(index){const s=this.state();s[this.key].splice(index,1);this.save(s);this.render();},
+  clearDone(){const s=this.state();s[this.key]=s[this.key].filter(x=>!x.checked);this.save(s);this.render();},
+  clearAll(){if(!confirm('Einkaufsliste wirklich komplett leeren?'))return;const s=this.state();s[this.key]=[];this.save(s);this.render();},
+  render(){
+    const s=this.state(),list=s[this.key],el=document.getElementById('shopList');if(!el)return;
+    const open=list.filter(x=>!x.checked&&!x.owned),done=list.filter(x=>x.checked),owned=list.filter(x=>x.owned&&!x.checked);
+    let html='<div class="v63-head"><div><b>'+open.length+' offen</b><span>'+done.length+' erledigt</span><span>'+owned.length+' vorhanden</span></div><button type="button" class="secondary" onclick="FEP_V63.sortList()">↕ Sortieren</button></div>';
+    if(!list.length){html+='<div class="v63-empty">🛒<b>Deine Einkaufsliste ist leer.</b><span>Übernimm den Wochenplan oder füge oben eigene Artikel hinzu.</span></div>';el.innerHTML=html;return;}
+    const sections=[['Noch einkaufen',open,false],['Bereits vorhanden',owned,true],['Erledigt',done,true]];
+    sections.forEach(([title,arr,dim])=>{if(!arr.length)return;html+='<div class="v63-section"><h3>'+title+'</h3>';arr.forEach(x=>{const i=list.indexOf(x);html+='<div class="v63-row '+(dim?'muted-row':'')+'"><button type="button" class="v63-check" onclick="FEP_V63.toggle('+i+',\'checked\')" aria-label="Abhaken">'+(x.checked?'☑':'☐')+'</button><div class="v63-main"><b>'+esc(x.name)+'</b><span>'+formatQty(Number(x.qty||0))+' '+esc(x.unit||'')+'</span></div><button type="button" class="v63-own '+(x.owned?'is-owned':'')+'" onclick="FEP_V63.toggle('+i+',\'owned\')">'+(x.owned?'✓ Vorhanden':'Vorhanden')+'</button><button type="button" class="v63-del" onclick="FEP_V63.remove('+i+')" aria-label="Löschen">×</button></div>';});html+='</div>';});
+    el.innerHTML=html;
+  },
+  sortList(){const s=this.state();s[this.key].sort((a,b)=>{if(a.checked!==b.checked)return a.checked?1:-1;if(a.owned!==b.owned)return a.owned?1:-1;return this.norm(a.name).localeCompare(this.norm(b.name),'de');});this.save(s);this.render();}
+};
+// Replace legacy renderers so navigation and old integrations always show V63.
+window.renderShopping=function(){FEP_V63.render();};
+window.addShop=function(){FEP_V63.addManual();};
+window.addWeekToShop=function(){FEP_V63.mergeWeekToShopping();};
+window.toggleShop=function(i){FEP_V63.toggle(i,'checked');};
+window.delShop=function(i){FEP_V63.remove(i);};
+window.clearShop=function(){FEP_V63.clearAll();};
+document.addEventListener('DOMContentLoaded',function(){
+  const input=document.getElementById('newShop');
+  if(input)input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();FEP_V63.addManual();}});
+  FEP_V63.render();
+});
+</script>
+<style>
+.v63-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 14px}.v63-head div{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.v63-head span{font-size:.85rem;color:#68736c;background:#f1f5f0;padding:6px 9px;border-radius:999px}.v63-section{border-top:1px solid #e3e9e2;padding-top:4px;margin-top:14px}.v63-section h3{margin:12px 0 4px;font-size:1rem}.v63-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto 34px;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid #e7ece5}.v63-row.muted-row{opacity:.62}.v63-check,.v63-del{border:0;background:transparent;padding:4px;font-size:24px;min-height:44px}.v63-del{font-size:25px;color:#a44b45}.v63-main{min-width:0;display:flex;flex-direction:column;gap:3px}.v63-main b{overflow-wrap:anywhere}.v63-main span{font-size:.88rem;color:#68736c}.v63-own{border:1px solid #d4dfd1;background:#fff;border-radius:12px;padding:8px 10px;min-height:44px}.v63-own.is-owned{background:#eef7eb;border-color:#b9d3b8}.v63-empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:34px 18px;color:#68736c}.v63-empty:first-letter{font-size:32px}
+@media(max-width:520px){.v63-row{grid-template-columns:40px minmax(0,1fr) auto 30px}.v63-own{padding:7px 8px;font-size:.82rem}.v63-head .secondary{padding:8px 10px}}
+</style>
