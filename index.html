@@ -42,6 +42,17 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 .suggestions.mobile-inline{display:flex}
 .suggestion{display:inline-flex;align-items:center;gap:5px;border:1px solid #cbdac7;background:#fff;border-radius:999px;padding:9px 12px;cursor:pointer;font:inherit;color:#24362a}
 .suggestion small{color:#687268;font-size:.82em}
+
+/* V70 – kompakte, iPhone-optimierte Einkaufsliste */
+.v70-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0 14px;border-bottom:1px solid var(--line)}
+.v70-counts{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.v70-counts strong{font-size:20px}.v70-counts span{font-size:13px;color:var(--muted);background:#f0f4ef;padding:7px 9px;border-radius:999px}.v70-sort{white-space:nowrap;padding:10px 12px}
+.v70-group{margin-top:14px}.v70-group-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 7px;padding:0 2px}.v70-group-title h3{font-size:18px;margin:0}.v70-group-title span{font-size:13px;color:var(--muted)}
+.v70-item{display:grid;grid-template-columns:42px minmax(0,1fr) 72px 34px;gap:9px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:15px;padding:10px 9px;margin:7px 0;box-shadow:0 1px 5px #20302008;min-height:68px}
+.v70-check{width:34px;height:34px;border:2px solid #7b887f;border-radius:9px;background:#fff;color:#fff;font-size:21px;font-weight:900;padding:0;display:flex;align-items:center;justify-content:center}.v70-item:not(.done) .v70-check:active{transform:scale(.96)}.v70-item.done .v70-check{background:var(--g);border-color:var(--g)}
+.v70-info{min-width:0;display:flex;flex-direction:column;gap:2px}.v70-info strong{font-size:16px;line-height:1.2;overflow-wrap:anywhere}.v70-info span{font-size:14px;color:var(--muted)}.v70-info em{font-style:normal;font-size:12px;color:#2f6a3d;font-weight:800}
+.v70-price{text-align:right;display:flex;flex-direction:column;gap:1px;white-space:nowrap}.v70-price strong{font-size:15px}.v70-price span{font-size:11px;color:var(--muted)}.v70-price .no-price{font-size:13px}.v70-delete{background:transparent!important;color:var(--red)!important;border:0!important;padding:3px!important;font-size:28px!important;line-height:1;min-height:38px}
+.v70-item.done{opacity:.52}.v70-item.done .v70-info strong{text-decoration:line-through}.v70-item.owned{background:#f7fbf5}.v70-empty{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;padding:28px 14px;color:var(--muted)}.v70-empty-icon{font-size:34px}
+@media(max-width:480px){.v70-item{grid-template-columns:38px minmax(0,1fr) 58px 30px;gap:7px;padding:9px 7px;min-height:64px}.v70-check{width:32px;height:32px}.v70-info strong{font-size:15px}.v70-info span{font-size:13px}.v70-price strong{font-size:14px}.v70-price span{font-size:10px}.v70-delete{font-size:26px!important}.v70-counts strong{font-size:18px}.v70-counts span{font-size:12px;padding:6px 8px}.v70-sort{font-size:13px;padding:9px 10px}}
 </style></head>
 <body>
 <header><h1>FamilienEssensPlaner</h1><p>Planen · Kochen · Sparen · Einkaufen 🌱</p></header>
@@ -129,6 +140,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   });
 })();
 </script>
+</body></html>
 <section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" type="button" onclick="FEP_V63.mergeWeekToShopping()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" type="button" onclick="FEP_V63.clearDone()">☑ Erledigte entfernen</button><button class="secondary" type="button" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" type="button" onclick="FEP_V63.clearAll()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt. Eigene Artikel kannst du jederzeit ergänzen, als „vorhanden“ markieren oder abhaken.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div class="card"><div class="v54-controls"><button type="button" onclick="FEP_V54.render()">🏆 Einkauf optimieren</button><button type="button" onclick="FEP_V54.setBudget()">💰 Budget setzen</button><button type="button" onclick="FEP_V54.pantry()">🏠 Vorrat ergänzen</button></div><div id="v54Optimize"></div></div><div id="shopList"></div></div></section>
 </main>
 
@@ -1169,7 +1181,53 @@ document.addEventListener("DOMContentLoaded",()=>FEP_V54.init());
 .fep2-tools .quick button{min-height:110px}.recipe-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.recipe-grid .card{margin:0}.recipe-grid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px}.shop-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:13px 0}.danger{color:var(--red)}
 @media(max-width:620px){.recipe-grid{grid-template-columns:1fr}.fep2-tools .quick{grid-template-columns:repeat(2,1fr)}.fep2-tools .quick button{min-height:95px}}
 </style>
-</body></html><script>
+<script>
+/* V70 – mobile Einkaufsliste: kompakt, kontrastreich und ohne riesige Leerfelder */
+(function(){
+  function esc2(v){ return typeof esc==='function' ? esc(v) : String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function priceFor(name){
+    try{
+      const cat=window.INGREDIENT_CATALOG && (INGREDIENT_CATALOG[name] || Object.entries(INGREDIENT_CATALOG).find(([k,v])=>[k,...(v.aliases||[])].some(a=>String(a).toLowerCase()===String(name).toLowerCase()))?.[1]);
+      return cat && Number.isFinite(Number(cat.price)) ? Number(cat.price) : null;
+    }catch(e){return null;}
+  }
+  function category(name){
+    const n=String(name).toLowerCase();
+    if(/milch|sahne|joghurt|käse|feta|parmesan|butter/.test(n)) return 'Kühlung';
+    if(/hähnchen|hack|fleisch|wurst|fisch|lachs|patty/.test(n)) return 'Fleisch & Fisch';
+    if(/apfel|banane|beere|tomat|paprika|zucchini|salat|karotte|zwiebel|gemüse|kartoffel/.test(n)) return 'Obst & Gemüse';
+    if(/reis|nudel|spaghetti|hafer|mehl|öl|salz|pfeffer|curry|linsen|bohne|mais|sojasauce|wrap/.test(n)) return 'Vorrat';
+    return 'Sonstiges';
+  }
+  function render(){
+    const s=FEP_V63.state(), list=s.shoppingList || [], el=document.getElementById('shopList'); if(!el)return;
+    const open=list.filter(x=>!x.checked&&!x.owned), done=list.filter(x=>x.checked), owned=list.filter(x=>x.owned&&!x.checked);
+    let html='<div class="v70-summary"><div class="v70-counts"><strong>'+open.length+' offen</strong><span>'+done.length+' erledigt</span><span>'+owned.length+' vorhanden</span></div><button class="secondary v70-sort" type="button" onclick="FEP_V63.sortList()">↕ Sortieren</button></div>';
+    if(!list.length){ html+='<div class="v70-empty"><div class="v70-empty-icon">🛒</div><strong>Deine Einkaufsliste ist leer.</strong><span>Übernimm den Wochenplan oder füge oben einen Artikel hinzu.</span></div>'; el.innerHTML=html; return; }
+    const groups=[['Obst & Gemüse',[]],['Kühlung',[]],['Fleisch & Fisch',[]],['Vorrat',[]],['Sonstiges',[]]];
+    [...open,...owned,...done].forEach(x=>{const g=groups.find(a=>a[0]===category(x.name)); (g?g[1]:groups[4][1]).push(x);});
+    groups.forEach(([title,arr])=>{
+      if(!arr.length)return;
+      html+='<section class="v70-group"><div class="v70-group-title"><h3>'+title+'</h3><span>'+arr.length+' '+(arr.length===1?'Artikel':'Artikel')+'</span></div>';
+      arr.forEach(x=>{
+        const i=list.indexOf(x), state=x.checked?'done':(x.owned?'owned':'open'), p=priceFor(x.name);
+        html+='<div class="v70-item '+state+'">'+
+          '<button class="v70-check" type="button" onclick="FEP_V63.toggle('+i+',\'checked\')" aria-label="'+(x.checked?'Erledigt':'Als erledigt markieren')+'">'+(x.checked?'✓':'')+'</button>'+ 
+          '<div class="v70-info"><strong>'+esc2(x.name)+'</strong><span>'+formatQty(Number(x.qty||0))+' '+esc2(x.unit||'')+'</span>'+(x.owned?'<em>✓ Vorhanden</em>':'')+'</div>'+ 
+          '<div class="v70-price">'+(p!==null?'<strong>'+p.toFixed(2).replace('.',',')+' €</strong><span>Richtwert</span>':'<span class="no-price">Preis –</span>')+'</div>'+ 
+          '<button class="v70-delete" type="button" onclick="FEP_V63.remove('+i+')" aria-label="'+esc2(x.name)+' löschen">×</button>'+ 
+          '</div>';
+      });
+      html+='</section>';
+    });
+    el.innerHTML=html;
+  }
+  window.FEP_V70={render};
+  window.renderShopping=render;
+  document.addEventListener('DOMContentLoaded',()=>render());
+})();
+
+</script><script>
 /* V63 – Einkaufsliste komplett überarbeitet
    Ein gemeinsamer, persistenter Warenkorb für Wochenplan + eigene Artikel.
    Mengen werden nach Zutat und Einheit zusammengeführt; „vorhanden“ wird beim
