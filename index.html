@@ -140,6 +140,54 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   });
 })();
 </script>
+
+<style>
+/* V71 – echte iPhone-Korrektur der Einkaufsliste: kein horizontales Überlaufen */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+main,.view,.card,#shopList{min-width:0;max-width:100%;width:100%}
+#shopList{overflow:hidden}
+.v71-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 14px;padding:0 0 12px;border-bottom:1px solid var(--line)}
+.v71-counts{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}.v71-counts b{font-size:20px}.v71-pill{font-size:13px;color:var(--muted);background:#f0f4ef;padding:6px 9px;border-radius:999px;white-space:nowrap}
+.v71-sort{flex:0 0 auto;white-space:nowrap;padding:9px 11px}
+.v71-section{margin:0 0 16px}.v71-title{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px;padding:0 2px}.v71-title h3{margin:0;font-size:18px}.v71-title span{font-size:13px;color:var(--muted)}
+.v71-row{display:grid;grid-template-columns:42px minmax(0,1fr) 36px;gap:9px;align-items:center;width:100%;min-width:0;padding:11px 4px;border-bottom:1px solid #e4eae3}
+.v71-check{width:34px;height:34px;border:2px solid #7c8880;border-radius:9px;background:#fff;color:#fff;font-size:20px;font-weight:900;padding:0;display:flex;align-items:center;justify-content:center}.v71-row.done .v71-check{background:var(--g);border-color:var(--g)}
+.v71-main{min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:2px}.v71-main b{font-size:16px;line-height:1.25;overflow-wrap:anywhere}.v71-main span{font-size:14px;color:var(--muted)}.v71-main em{font-style:normal;font-size:12px;color:#2f6a3d;font-weight:800}
+.v71-price{font-size:13px;color:#2f6a3d;font-weight:800}.v71-del{width:34px;height:34px;padding:0!important;background:transparent!important;border:0!important;color:var(--red)!important;font-size:25px!important;line-height:1}.v71-row.done{opacity:.55}.v71-row.done .v71-main b{text-decoration:line-through}
+.v71-empty{text-align:center;padding:28px 14px;color:var(--muted)}
+@media(max-width:480px){
+  .v71-summary{align-items:flex-start}.v71-counts b{font-size:18px}.v71-pill{font-size:12px;padding:5px 7px}.v71-sort{font-size:13px;padding:8px 9px}
+  .v71-row{grid-template-columns:38px minmax(0,1fr) 32px;gap:8px;padding:10px 2px}.v71-check{width:32px;height:32px}.v71-main b{font-size:16px}.v71-main span{font-size:13px}.v71-price{font-size:12px}.v71-del{width:30px;height:30px}
+}
+</style>
+<script>
+/* V71 – finaler Renderer: bewusst ohne 4-Spalten-Grid und ohne breite Vorhanden-Schaltfläche */
+(function(){
+  function esc71(v){return typeof esc==='function'?esc(v):String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function price71(name){
+    try{
+      const c=window.INGREDIENT_CATALOG;
+      if(!c)return null;
+      const hit=Object.entries(c).find(([k,v])=>String(k).toLowerCase()===String(name).toLowerCase() || (Array.isArray(v.aliases)&&v.aliases.some(a=>String(a).toLowerCase()===String(name).toLowerCase())));
+      return hit && Number.isFinite(Number(hit[1].price))?Number(hit[1].price):null;
+    }catch(e){return null;}
+  }
+  function cat71(name){const n=String(name).toLowerCase();if(/milch|sahne|joghurt|käse|feta|parmesan|butter/.test(n))return'Kühlung';if(/hähn|hack|fleisch|wurst|fisch|lachs/.test(n))return'Fleisch & Fisch';if(/apfel|banane|beere|tomat|paprika|gurke|salat|zucchini|karotte|zwiebel|gemüse|kartoffel/.test(n))return'Obst & Gemüse';if(/reis|nudel|spaghetti|hafer|mehl|öl|salz|pfeffer|curry|linsen|bohne|mais|sojasauce|wrap/.test(n))return'Vorrat';return'Sonstiges';}
+  function render71(){
+    const el=document.getElementById('shopList');if(!el||!window.FEP_V63)return;
+    const s=FEP_V63.state(),list=Array.isArray(s.shoppingList)?s.shoppingList:[];
+    const open=list.filter(x=>!x.checked&&!x.owned),owned=list.filter(x=>x.owned&&!x.checked),done=list.filter(x=>x.checked);
+    let h='<div class="v71-summary"><div class="v71-counts"><b>'+open.length+' offen</b><span class="v71-pill">'+done.length+' erledigt</span><span class="v71-pill">'+owned.length+' vorhanden</span></div><button class="secondary v71-sort" type="button" onclick="FEP_V63.sortList()">↕ Sortieren</button></div>';
+    if(!list.length){el.innerHTML=h+'<div class="v71-empty">🛒<br><b>Deine Einkaufsliste ist leer.</b><br><span>Übernimm den Wochenplan oder füge oben einen Artikel hinzu.</span></div>';return;}
+    const groups=[['Noch einkaufen',open],['Bereits vorhanden',owned],['Erledigt',done]];
+    groups.forEach(([title,arr])=>{if(!arr.length)return;h+='<section class="v71-section"><div class="v71-title"><h3>'+title+'</h3><span>'+arr.length+' '+(arr.length===1?'Artikel':'Artikel')+'</span></div>';arr.forEach(x=>{const i=list.indexOf(x),p=price71(x.name);h+='<div class="v71-row '+(x.checked?'done':'')+' '+(x.owned?'owned':'')+'"><button class="v71-check" type="button" onclick="FEP_V63.toggle('+i+',\'checked\')" aria-label="'+(x.checked?'Als offen markieren':'Als erledigt markieren')+'">'+(x.checked?'✓':'')+'</button><div class="v71-main"><b>'+esc71(x.name)+'</b><span>'+formatQty(Number(x.qty||0))+' '+esc71(x.unit||'')+'</span>'+(x.owned?'<em>✓ Vorhanden</em>':'')+(p!==null?'<small class="v71-price">Richtwert: '+p.toFixed(2).replace('.',',')+' €</small>':'')+'</div><button class="v71-del" type="button" onclick="FEP_V63.remove('+i+')" aria-label="'+esc71(x.name)+' löschen">×</button></div>';});h+='</section>';});
+    el.innerHTML=h;
+  }
+  window.renderShopping=render71;
+  window.FEP_V71={render:render71};
+  document.addEventListener('DOMContentLoaded',render71);
+})();
+</script>
 </body></html>
 <section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" type="button" onclick="FEP_V63.mergeWeekToShopping()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" type="button" onclick="FEP_V63.clearDone()">☑ Erledigte entfernen</button><button class="secondary" type="button" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" type="button" onclick="FEP_V63.clearAll()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt. Eigene Artikel kannst du jederzeit ergänzen, als „vorhanden“ markieren oder abhaken.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div class="card"><div class="v54-controls"><button type="button" onclick="FEP_V54.render()">🏆 Einkauf optimieren</button><button type="button" onclick="FEP_V54.setBudget()">💰 Budget setzen</button><button type="button" onclick="FEP_V54.pantry()">🏠 Vorrat ergänzen</button></div><div id="v54Optimize"></div></div><div id="shopList"></div></div></section>
 </main>
