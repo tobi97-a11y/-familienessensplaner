@@ -188,7 +188,7 @@ main,.view,.card,#shopList{min-width:0;max-width:100%;width:100%}
   document.addEventListener('DOMContentLoaded',render71);
 })();
 </script>
-</body></html>
+
 <section id="shopping" class="view"><div class="card"><h2>🧺 Einkaufsliste</h2><div class="actions"><input id="newShop" placeholder="z. B. Milch 1 l" style="flex:1;min-width:190px"><button onclick="addShop()">+ Hinzufügen</button></div><div class="actions"><button class="secondary" type="button" onclick="FEP_V63.mergeWeekToShopping()">📅 Wochenplan übernehmen</button><div id="v45TransferStatus" class="notice ok" style="display:none;margin:8px 0;"></div><button class="secondary" type="button" onclick="FEP_V63.clearDone()">☑ Erledigte entfernen</button><button class="secondary" type="button" onclick="compareList()">🏆 Preise vergleichen</button><button class="danger" type="button" onclick="FEP_V63.clearAll()">Liste leeren</button></div></div><div class="card"><div id="shoppingSummary" class="card" style="margin-bottom:12px;"><strong>🛒 Einkaufsliste</strong><div style="margin-top:6px;color:#667066;">Zutaten aus dem Wochenplan werden zusammengeführt. Eigene Artikel kannst du jederzeit ergänzen, als „vorhanden“ markieren oder abhaken.</div></div><div class="actions" style="margin-bottom:12px"><button id="compareShoppingNow" type="button">🏆 Einkaufsliste vergleichen</button></div><div class="card"><div class="actions"><button type="button" onclick="FEP_V49.saveShopping();FEP_V49.renderShopping()">🔄 Wochenplan neu übernehmen</button><button type="button" onclick="FEP_V49.renderStoreComparison()">🏆 Gesamteinkauf vergleichen</button></div><div id="budgetStatus" class="notice"></div><div id="storeComparison"></div></div><div class="card"><div class="v54-controls"><button type="button" onclick="FEP_V54.render()">🏆 Einkauf optimieren</button><button type="button" onclick="FEP_V54.setBudget()">💰 Budget setzen</button><button type="button" onclick="FEP_V54.pantry()">🏠 Vorrat ergänzen</button></div><div id="v54Optimize"></div></div><div id="shopList"></div></div></section>
 </main>
 
@@ -1517,3 +1517,43 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('DOMContentLoaded',function(){renderRecipes();renderPantrySmart();renderFavoritesSmart();renderStatsSmart();});
 })();
 </script>
+
+<style id="v72-shopping-fix">
+/* V72 – final iPhone shopping-list fix */
+.shop-item input[type="checkbox"]{width:32px!important;height:32px!important;min-width:32px!important;margin:0;box-sizing:border-box;accent-color:#31533d}
+.shop-item{display:grid;grid-template-columns:36px minmax(0,1fr) 36px!important;gap:10px;align-items:center;width:100%;min-width:0;box-sizing:border-box;padding:11px 4px;border-bottom:1px solid var(--line)}
+.shop-item>div{min-width:0;overflow:hidden}
+.shop-item>div b{display:block;font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+.shop-item .small{font-size:13px;line-height:1.35}
+.shop-item .danger{width:34px!important;min-width:34px;padding:4px!important;background:transparent!important;border:0!important;font-size:26px!important;line-height:1;color:var(--red)!important}
+.shop-cat{font-size:18px;font-weight:900;margin:18px 0 6px;padding:0 2px;color:var(--text)}
+.v72-shop-summary{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+.v72-shop-summary strong{font-size:18px}.v72-shop-pill{font-size:12px;color:var(--muted);background:#f0f4ef;padding:6px 8px;border-radius:999px}
+@media(max-width:480px){.shop-item{grid-template-columns:36px minmax(0,1fr) 34px!important;gap:9px;padding:11px 2px}.shop-item>div b{font-size:16px}.shop-item .small{font-size:13px}.shop-item .danger{width:32px!important;min-width:32px;font-size:25px!important}.shop-cat{font-size:17px;margin-top:16px}}
+</style>
+<script>
+/* V72 – one authoritative renderer. Fixes the iPhone issue caused by the global
+   input{width:100%} rule making checkbox columns consume the whole row. */
+(function(){
+  function esc72(v){return typeof esc==='function'?esc(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function cat72(name){const n=String(name||'').toLowerCase();if(/milch|sahne|joghurt|käse|feta|parmesan|butter/.test(n))return'Kühlung';if(/hähn|hack|fleisch|wurst|fisch|lachs/.test(n))return'Fleisch & Fisch';if(/apfel|banane|beere|tomat|paprika|gurke|salat|zucchini|karotte|zwiebel|gemüse|kartoffel/.test(n))return'Obst & Gemüse';if(/reis|nudel|spaghetti|hafer|mehl|öl|salz|pfeffer|curry|linsen|bohne|mais|sojasauce|wrap/.test(n))return'Vorrat';return'Sonstiges';}
+  function price72(name){try{const c=window.INGREDIENT_CATALOG;if(!c)return null;const e=Object.entries(c).find(([k,v])=>String(k).toLowerCase()===String(name).toLowerCase()||(Array.isArray(v.aliases)&&v.aliases.some(a=>String(a).toLowerCase()===String(name).toLowerCase())));return e&&Number.isFinite(Number(e[1].price))?Number(e[1].price):null}catch(e){return null}}
+  function render72(){
+    const el=document.getElementById('shopList'); if(!el||!window.FEP_V63)return;
+    const s=FEP_V63.state(), list=Array.isArray(s.shoppingList)?s.shoppingList:[];
+    const open=list.filter(x=>!x.checked&&!x.owned), owned=list.filter(x=>x.owned&&!x.checked), done=list.filter(x=>x.checked);
+    let h='<div class="v72-shop-summary"><div><strong>'+open.length+' offen</strong> <span class="v72-shop-pill">'+done.length+' erledigt</span> <span class="v72-shop-pill">'+owned.length+' vorhanden</span></div><button class="secondary" type="button" onclick="FEP_V63.sortList()">↕ Sortieren</button></div>';
+    if(!list.length){el.innerHTML=h+'<div class="v71-empty">🛒<br><b>Deine Einkaufsliste ist leer.</b><br><span>Übernimm den Wochenplan oder füge eigene Artikel hinzu.</span></div>';return;}
+    const groups={"Obst & Gemüse":[],"Kühlung":[],"Fleisch & Fisch":[],"Vorrat":[],"Sonstiges":[]};
+    list.forEach((x,i)=>{const g=cat72(x.name);(groups[g]||(groups.Sonstiges)).push({x,i});});
+    Object.entries(groups).forEach(([g,arr])=>{if(!arr.length)return;h+='<div class="shop-cat">'+g+' <span style="font-size:13px;color:var(--muted);font-weight:500">'+arr.length+'</span></div>';arr.forEach(({x,i})=>{const state=x.checked?'done':(x.owned?'owned':'open');const p=price72(x.name);h+='<div class="shop-item '+state+'"><button class="v70-check" type="button" onclick="FEP_V63.toggle('+i+',\'checked\')" aria-label="'+(x.checked?'Als offen markieren':'Als erledigt markieren')+'">'+(x.checked?'✓':'')+'</button><div><b>'+esc72(x.name)+'</b><div class="small">'+formatQty(Number(x.qty||0))+' '+esc72(x.unit||'')+(x.owned?' · ✓ Vorhanden':'')+(p!==null?' · '+p.toFixed(2).replace('.',',')+' €':'')+'</div></div><button class="danger" type="button" onclick="FEP_V63.remove('+i+')" aria-label="Löschen">×</button></div>';});});
+    el.innerHTML=h;
+  }
+  window.renderShopping=render72;
+  window.FEP_V72={render:render72};
+  document.addEventListener('DOMContentLoaded',render72);
+})();
+</script>
+
+</body>
+</html>
