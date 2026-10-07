@@ -1,0 +1,18 @@
+FamilienEssensPlaner – Finalstand
+
+Enthalten:
+- 100 Rezepte + 100 Rezeptbilder
+- Wochenplanung automatisch/manuell/gemischt
+- automatische Abwechslung mit Historie
+- Familienprofil mit Budget, Personen, Ernährung, Kochzeit und Kinderfreundlichkeit
+- Einkaufsliste mit Zusammenfassen, Abhaken und Vorrat
+- Preisvergleich mit Händler-/Benchmark-Kennzeichnung
+- Favoriten
+- Vorratskammer
+- Wochen-Auswertung
+- PWA/Zum Home-Bildschirm
+- Mobile/iPhone-Optimierungen
+- Datenschutz-Hinweis und Impressum-Platzhalter
+
+Hinweis: Preiswerte sind, sofern nicht ausdrücklich verifiziert, als Web-/Benchmarkwerte zu verstehen; keine Live-Händler-API wird vorgetäuscht.
+Vor öffentlicher Nutzung: Impressum/Anbieterangaben rechtlich korrekt ergänzen.

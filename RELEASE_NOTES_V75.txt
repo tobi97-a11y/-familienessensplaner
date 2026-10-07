@@ -1,0 +1,10 @@
+V75 – BILDMAPPING UND CACHE FINAL KORRIGIERT
+
+- Baut vollständig auf V74 auf.
+- Alle 100 Rezepte verwenden jetzt eindeutig images/recipe-001.jpg bis recipe-100.jpg.
+- WebP als Primärquelle entfernt, damit keine alte/mismatched WebP-Datei mehr geladen wird.
+- Cache-Busting ?v=75 für Rezeptbilder.
+- Alter soup.jpg-Fallback entfernt: ein fehlendes Bild kann nicht mehr stillschweigend durch dasselbe Suppenbild ersetzt werden.
+- Service Worker auf v75 umgestellt und alte Caches werden beim Aktivieren gelöscht.
+- Netzwerk-first für App und Rezeptbilder, damit GitHub Pages nicht an einem alten Bildcache festhält.
+- Alle 100 JPG-Rezeptbilder bleiben enthalten.

@@ -1,0 +1,8 @@
+V73 – Rezeptansicht iPhone korrigiert
+
+- Rezept-Popup auf iPhone vollständig scrollbar
+- Safe-Area und dynamische Viewport-Höhe berücksichtigt
+- Sticky Schließen- und Aktionsbereich
+- Hintergrund-Scroll während Rezeptansicht gesperrt
+- Tofu-Reis-Wraps: neues scharfes Bild ohne eingebrannte Rezeptnummer
+- Legacy-Rezeptmodal ebenfalls mobil abgesichert

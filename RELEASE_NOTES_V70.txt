@@ -1,0 +1,10 @@
+FamilienEssensPlaner V70 – Einkaufsliste Mobile
+
+- Einkaufsliste auf kleine iPhone-Bildschirme optimiert.
+- Keine großen leeren Eingabefelder innerhalb der Artikelliste.
+- Kompakte Artikelkarten mit Checkbox, Artikelname, Menge, Preis/Richtwert und Löschen.
+- Kategorien: Obst & Gemüse, Kühlung, Fleisch & Fisch, Vorrat, Sonstiges.
+- Status oben kompakt: offen / erledigt / vorhanden.
+- Preise werden, wenn vorhanden, als Richtwert angezeigt; die bestehenden Preisvergleichs-Funktionen bleiben erhalten.
+- Erledigte und vorhandene Artikel bleiben visuell unterscheidbar.
+- Bestehende V69-Funktionen und 100 Rezeptbilder wurden übernommen.

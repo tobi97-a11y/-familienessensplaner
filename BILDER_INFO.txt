@@ -1,0 +1,5 @@
+FamilienEssensPlaner V62
+
+Rezeptbilder 1-12: neu erzeugte hochauflösende Food-Fotografie, jeweils als eigenes Bild zugeschnitten.
+Rezeptbilder 13-100: bestehende Bildmotive wurden hochwertig neu skaliert und moderat nachgeschärft.
+Hinweis: Für 13-100 stammt das Ausgangsmaterial weiterhin aus der bisherigen Bildserie; eine vollständige Ersetzung durch 88 individuell neu erzeugte Fotos wäre für die endgültige Bildqualität sinnvoll.

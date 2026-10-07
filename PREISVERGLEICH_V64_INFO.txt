@@ -1,0 +1,11 @@
+V64 Preisvergleich
+
+- Händlerpreis wird bevorzugt, wenn für genau diesen Artikel ein hinterlegter Händlerpreis vorhanden ist.
+- Fehlt ein Händlerpreis, wird nur ein Web-/Benchmarkpreis als Schätzung verwendet und entsprechend gekennzeichnet.
+- Der günstigste Markt je Artikel wird nur dann als Händlerpreis ausgewiesen, wenn mindestens ein echter Händlerpreis hinterlegt ist.
+- Die Warenkorb-Gesamtsummen sind Schätzungen, solange nicht für alle Artikel und Märkte ein aktueller Händler-/Aggregatorfeed vorhanden ist.
+- REWE-Preise können standortabhängig sein.
+- Keine Livepreise werden vorgetäuscht.
+
+Getestete/berücksichtigte Quellen im Entwicklungsstand September 2026:
+REWE Shop und Angebotsseiten; ProVeg Preisstudie; Verbraucherinformationen zu Preisunterschieden; aktuelle öffentliche Preisvergleichs-/Benchmarkquellen.

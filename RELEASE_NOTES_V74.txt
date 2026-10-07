@@ -1,0 +1,12 @@
+V74 – REZEPTBILDER OPTIMIERT
+
+Aufbau: V73 auf Basis von V72.
+- alle 100 Rezeptbilder auf einheitliche 1200x900 JPG-Master gebracht
+- alle 100 Bilder zusätzlich als hochwertige WebP-Versionen erzeugt
+- WebP wird in der App als primäres Format geladen, JPEG bleibt als Fallback
+- progressive JPEG-Fallbacks und optimierte Kompression
+- sanfte Nachschärfung
+- Lazy-Loading und async decoding für Rezeptbilder
+- Service-Worker-Cache auf V74 erhöht
+- Rezeptansicht aus V73 und Einkaufsliste aus V72 übernommen
+- keine Rezeptnummern als sichtbare Bildüberlagerung in den Bilddateien

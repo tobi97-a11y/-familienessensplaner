@@ -1,0 +1,9 @@
+FamilienEssensPlaner V71 – Einkaufsliste iPhone korrigiert
+
+- Horizontales Überlaufen der Einkaufsliste behoben.
+- Keine 4-Spalten-Zeile mit breiter „Vorhanden“-Schaltfläche mehr.
+- Kompakte 3-Spalten-Darstellung: Checkbox | Artikel/Menge/Preis | Löschen.
+- Kategorien „Noch einkaufen“, „Bereits vorhanden“ und „Erledigt“.
+- Breite und Mindestbreiten auf 100% begrenzt; overflow-x auf Dokumentebene verhindert.
+- Touch-Ziele bleiben iPhone-tauglich.
+- V69/V70-Funktionen und Daten bleiben erhalten.
